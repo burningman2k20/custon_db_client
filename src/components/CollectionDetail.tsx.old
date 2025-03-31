@@ -1,0 +1,424 @@
+// import { useEffect, useState } from 'react';
+// import { useParams } from 'react-router-dom';
+// import { getDocuments, createDocument, deleteDocument } from '../services/api';
+
+// export default function CollectionDetail() {
+//     const { name } = useParams<{ name: string }>();
+//     const [documents, setDocuments] = useState({});
+//     const [newDocId, setNewDocId] = useState('');
+//     const [newDocData, setNewDocData] = useState('');
+
+//     useEffect(() => {
+//         loadDocuments();
+//     }, [name]);
+
+//     const loadDocuments = async () => {
+//         if (name) {
+//             const data = await getDocuments(name);
+//             setDocuments(data);
+//         }
+//     };
+
+//     const handleCreate = async () => {
+//         if (!name || !newDocId || !newDocData) return;
+//         await createDocument(name, newDocId, JSON.parse(newDocData));
+//         setNewDocId('');
+//         setNewDocData('');
+//         loadDocuments();
+//     };
+
+//     const handleDelete = async (docId: string) => {
+//         if (!name) return;
+//         await deleteDocument(name, docId);
+//         loadDocuments();
+//     };
+
+//     return (
+//         <div>
+//             <input value={newDocId} onChange={(e) => setNewDocId(e.target.value)} placeholder="Document ID" />
+//             <textarea value={newDocData} onChange={(e) => setNewDocData(e.target.value)} placeholder="Document Data (JSON)" />
+//             <button onClick={handleCreate}>Create</button>
+
+//             <ul>
+//                 {Object.entries(documents).map(([key, value]) => (
+//                     <li key={key}>
+//                         {key}: {JSON.stringify(value)}
+//                         <button onClick={() => handleDelete(key)}>Delete</button>
+//                     </li>
+//                 ))}
+//             </ul>
+//         </div>
+//     );
+// }
+
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { getDocuments, createDocument, deleteDocument, updateDocument, createCollection } from '../services/api';
+import { create } from 'domain';
+
+
+interface DocumentData {
+    [key: string]: any;
+}
+export default function CollectionDetail() {
+    const { name } = useParams<{ name: string }>();
+    const [documents, setDocuments] = useState<Record<string, any>>({});
+    const [document, setDocument] = useState<Record<string, any>>({});
+    const [newDocId, setNewDocId] = useState('');
+    const [newDocData, setNewDocData] = useState('');
+
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+    const [editedValues, setEditedValues] = useState<DocumentData>({});
+
+    const [path, setPath] = useState('');
+
+    const [exp, setExp] = useState(false);
+
+    const [collection, setCollection] = useState("");
+
+    const [fieldName, setFieldName] = useState("");
+    const [fieldData, setFieldData] = useState("");
+
+    const options = [
+        { value: 'Field', label: 'Field' },
+        { value: 'Collection', label: 'Collection' }
+    ];
+
+    const fieldTypes = [
+        { value: 'text', label: 'text' },
+        { value: 'number', label: 'number' }
+    ]
+
+    const [selectedValue, setSelectedValue] = useState(options[0].value);
+    const [selectedFieldType, setSelectedFieldType] = useState("");
+
+
+    useEffect(() => {
+        loadDocuments();
+    }, [name]);
+
+    const loadDocuments = async () => {
+        if (name) {
+            const data = await getDocuments(name);
+            setDocuments(data);
+            setEditedValues(data);
+        }
+    };
+
+    const handleDelete = async (docId: string) => {
+        if (!name) return;
+        await deleteDocument(name, docId);
+        loadDocuments();
+    };
+
+    const handleCreate = async () => {
+        if (!name || !newDocId || !newDocData) return;
+        await createDocument(name, newDocId, JSON.parse(newDocData));
+        setNewDocId('');
+        setNewDocData('');
+        loadDocuments();
+    };
+
+    // Handle expand/collapse for nested collections
+    const toggleExpand = (key: string) => {
+        setExpanded((prev) => ({
+            ...prev,
+            [key]: !prev[key],
+        }));
+        setExp(!exp);
+    };
+
+    // Handle value change for editable fields
+    const handleChange = (keyPath: string[], value: any) => {
+        setEditedValues((prev) => {
+            const updated = { ...prev };
+            let obj = updated;
+
+            keyPath.forEach((key, index) => {
+                if (index === keyPath.length - 1) {
+                    obj[key] = value;
+                } else {
+                    obj = obj[key] = { ...obj[key] };
+                }
+            });
+
+            return updated;
+        });
+    };
+
+    const handleNewFieldChange = (field: string, value: any) => {
+        setNewDocFields((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
+    const handleAddNewDocument = async () => {
+        if (!name || !newDocId.trim()) return;
+        try {
+            await createDocument(name, newDocId, newDocFields);
+            setNewDocId('');
+            setNewDocFields({});
+            loadDocuments(); // Refresh list
+            alert(`Document "${newDocId}" created successfully!`);
+        } catch (err) {
+            setError(`Failed to create document "${newDocId}"`);
+            console.error(err);
+        }
+    };
+
+
+    // Save updated document to the server
+    const handleSave = async (docId: string) => {
+        if (!name) return;
+        try {
+            await updateDocument(name, docId, editedValues[docId]);
+            alert('Document updated successfully!');
+            loadDocuments(); // Reload data
+        } catch (error) {
+            console.error('Failed to update document:', error);
+            alert('Failed to update document');
+        }
+    };
+
+    const getInputType = (value: any) => {
+        if (typeof value === 'string') {
+            if (value.includes('@')) return 'email';
+            return 'text';
+        }
+        if (typeof value === 'number') return 'number';
+        if (typeof value === 'boolean') return 'checkbox';
+        if (value instanceof Date) return 'date';
+        if (value instanceof File) return 'file';
+        return 'text';
+    };
+
+    const getValueType = (value: any) => {
+        if (typeof value === 'string') {
+            if (value.includes('@')) return 'email';
+            return "";
+        }
+        if (typeof value === 'number') return 0;
+        // if (typeof value === 'boolean') return 'checkbox';
+        // if (value instanceof Date) return 'date';
+        // if (value instanceof File) return 'file';
+        return "";
+    };
+
+    // Recursive function to display nested data
+    // Render nested data recursively
+    const renderData = (data: any, keyPath: string[] = []) => {
+
+        if (typeof data === 'object' && data !== null) {
+
+            return (
+
+                <ul className="ml-4">
+
+                    {/* <button onClick={() => {
+                        if (path.length == 0) { setPath(String(keyPath)) }
+                        alert('!' + path + '!');
+                    }
+                    }>add field</button> */}
+
+                    {Object.entries(data).map(([key, value]) => (
+                        <li key={key} className="mb-2">
+
+                            {typeof value === 'object' ? (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            toggleExpand([...keyPath, key].join('.'));
+                                            if (!exp) {
+                                                setPath(keyPath + '/' + key);
+
+                                            } else {
+                                                setPath(String(keyPath));
+
+                                            }
+                                            path.replace('.', '/').replace(',', '/');
+                                            // alert(keyPath + '/' + key);
+                                            // alert([...keyPath, key].join('.'));
+                                        }}
+                                        className="text-blue-500 hover:underline"
+                                    >
+                                        {expanded[[...keyPath, key].join('.')] ? '▼' : '▶'} {key}
+                                    </button>
+                                    {expanded[[...keyPath, key].join('.')] &&
+                                        renderData(value, [...keyPath, key])
+                                    }
+                                    <br />
+                                    <button className="btn btn-primary" onClick={() => {
+                                        setPath(String(keyPath))
+                                        path.replace('.', '/').replace(',', '/');
+                                    }
+                                    }>Select Collection</button>
+
+                                    {/* <button>add collection</button> */}
+                                </>
+                            ) : (
+                                <div className="flex items-center">
+                                    <label className="w-32 font-semibold">{key}:</label>
+                                    <input
+                                        type={getInputType(value)}
+                                        value={value as any}
+                                        onChange={(e) =>
+                                            handleChange([...keyPath, key], e.target.value)
+                                        }
+                                        className="border p-2 w-full rounded"
+                                    />
+                                    <button className="btn btn-primary" onClick={() => {
+                                        setPath(String(keyPath + '/' + key))
+                                        path.replace('.', '/').replace(',', '/');
+                                    }
+                                    }>Select Field</button>
+
+                                </div>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            );
+        }
+        return <span>{String(data)}</span>;
+    };
+
+    const handleDropDownChange = (event: any) => {
+        setSelectedValue(event.target.value);
+    };
+
+    const handleChangeFieldType = (event: any) => {
+        setSelectedFieldType(event.target.value);
+    };
+
+    const handleNewCollectionName = (event: any) => {
+        // setSelectedFieldType(event.target.value);
+        setCollection(event.target.value);
+    };
+
+    const nothing = () => {
+
+    }
+
+    const createDocumentField = (path: string, name: string, data: any) => {
+        // var newDoc: DocumentData = typeof(DocumentData);
+        // newDoc[name] = data;
+        // setNewDocData(newDoc);
+        // createCollection    
+    }
+
+    const createSubCollection = (event: any) => {
+        var newPath = name + '/' + path + '/' + collection;
+        newPath.replaceAll('/', '.');
+        // createCollection(newPath);
+        // alert(newPath);
+    }
+
+    const handleFieldName = (event: any) => {
+        setFieldName(event.target.value);
+    }
+
+    const handleFieldData = (event: any) => {
+        setFieldData(event.target.value);
+    }
+
+    return (
+        <div>
+            <button className="btn btn-primary" onClick={() => window.history.back()}>Back</button>
+            <h2 className="text-2xl font-bold mb-4">Collection: {name}</h2>
+            <label>Path:
+                <input type="text" value={path.replace(',', '/')} />
+            </label>
+
+            <div>
+                <label htmlFor="list">Select New:</label>
+                <select id="list" value={selectedValue} onChange={handleDropDownChange}>
+                    {options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </select>
+
+                {selectedValue === 'Field' && (
+                    <div>
+                        <label htmlFor="fieldName">Field Name</label>
+                        <input id="fieldName" type="text" value={fieldName} onChange={handleFieldName} />
+                        <label htmlFor="fieldData">Field Data</label>
+                        <input id="fieldData" type="text" value={fieldData} onChange={handleFieldData} />
+                        <div>
+                            <label htmlFor="list">Type:</label>
+                            <select id="list" value={selectedFieldType} onChange={handleChangeFieldType}>
+                                {fieldTypes.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <button className="btn btn-primary" onClick={nothing}>Create Field</button>
+                    </div>
+                )}
+
+                {selectedValue === 'Collection' && (
+                    <div>
+                        <label htmlFor="collectionName">Collection Name</label>
+                        <input id="collectionName" type="text" value={collection} onChange={handleNewCollectionName} />
+                        <button className="btn btn-primary" onClick={createSubCollection}>Create Collection</button>
+                    </div>
+                )}
+
+
+            </div>
+
+
+
+            {Object.entries(editedValues).map(([docId, data]) => (
+                <div key={docId} className="mb-4 border p-4 rounded shadow">
+                    <h3 className="font-bold mb-2">{docId}</h3>
+
+                    {
+                        renderData(data, [docId])}
+
+                    {/* Save button */}
+                    <button
+                        onClick={() => handleSave(docId)}
+                        className="btn btn-primary"
+                    >
+                        Save Changes
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
+
+
+    // return (
+    //     <div>
+    //         <h2 className="text-2xl font-bold mb-4">Collection: {name}</h2>
+    //         <ul>
+    //             {Object.entries(documents).map(([key, value]) => (
+    //                 <li key={key} className="mb-2 flex justify-between items-center">
+    //                     <div>
+    //                         {key}: {JSON.stringify(value)}
+    //                     </div>
+    //                     <div>
+    //                         <Link
+    //                             to={`/collections/${name}/documents/${key}`}
+    //                             className="text-blue-600 hover:underline mr-2"
+    //                         >
+    //                             Edit
+    //                         </Link>
+    //                         <button
+    //                             onClick={() => handleDelete(key)}
+    //                             className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+    //                         >
+    //                             Delete
+    //                         </button>
+    //                     </div>
+    //                 </li>
+    //             ))}
+    //         </ul>
+    //     </div>
+    // );
+}

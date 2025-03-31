@@ -1,0 +1,200 @@
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { getDocuments, updateDocument, createDocument } from '../services/api';
+
+export default function CollectionDetail() {
+    const { name } = useParams<{ name: string }>();
+    const [documents, setDocuments] = useState<Record<string, any>>({});
+    const [newDocId, setNewDocId] = useState('');
+    const [newDocFields, setNewDocFields] = useState<Record<string, any>>({});
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+    const [exp, setExp] = useState(false);
+
+    useEffect(() => {
+        if (name) {
+            loadDocuments();
+        }
+    }, [name]);
+
+    const loadDocuments = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            if (name) {
+                const data = await getDocuments(name);
+                setDocuments(data);
+            }
+        } catch (err) {
+            setError('Failed to load documents');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFieldChange = (docId: string, field: string, value: any) => {
+        setDocuments((prev) => ({
+            ...prev,
+            [docId]: {
+                ...prev[docId],
+                [field]: value,
+            },
+        }));
+    };
+
+    const handleSave = async (docId: string) => {
+        if (!name) return;
+        try {
+            await updateDocument(name, docId, documents[docId]);
+            alert(`Document "${docId}" updated successfully!`);
+            loadDocuments(); // Refresh list
+        } catch (err) {
+            setError(`Failed to update document "${docId}"`);
+            console.error(err);
+        }
+    };
+
+    const handleNewFieldChange = (field: string, value: any) => {
+        setNewDocFields((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
+    const handleAddNewDocument = async () => {
+        if (!name || !newDocId.trim()) return;
+        try {
+            await createDocument(name, newDocId, newDocFields);
+            setNewDocId('');
+            setNewDocFields({});
+            loadDocuments(); // Refresh list
+            alert(`Document "${newDocId}" created successfully!`);
+        } catch (err) {
+            setError(`Failed to create document "${newDocId}"`);
+            console.error(err);
+        }
+    };
+
+    // Handle expand/collapse for nested collections
+    const toggleExpand = (key: string) => {
+        setExpanded((prev) => ({
+            ...prev,
+            [key]: !prev[key],
+        }));
+        setExp(!exp);
+    };
+
+    const getInputType = (value: any) => {
+        if (typeof value === 'string') {
+            if (value.includes('@')) return 'email';
+            return 'text';
+        }
+        if (typeof value === 'number') return 'number';
+        if (typeof value === 'boolean') return 'checkbox';
+        if (value instanceof Date) return 'date';
+        if (value instanceof File) return 'file';
+        return 'text';
+    };
+
+
+    if (loading) return <div className="alert alert-info">Loading...</div>;
+    if (error) return <div className="alert alert-danger">{error}</div>;
+
+    return (
+        <div className="container mt-4">
+            <h2 className="mb-4">Collection: {name}</h2>
+
+            {/* Render Existing Documents */}
+            <ul className="list-group">
+                {Object.entries(documents).map(([docId, fields]) => (
+                    <li key={docId} className="list-group-item mb-3 shadow-sm rounded">
+                        <h5 className="mb-3">{docId}</h5>
+
+                        {/* Render Existing Fields */}
+                        {Object.entries(fields).map(([key, value]) => (
+
+                            <div key={key} className="mb-2 row">
+                                <label className="col-sm-3 col-form-label">{key}:</label>
+                                <div className="col-sm-9">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={value as any}
+                                        onChange={(e) =>
+                                            handleFieldChange(docId, key, e.target.value)
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Save Button */}
+                        <button
+                            onClick={() => handleSave(docId)}
+                            className="btn btn-success mt-2"
+                        >
+                            Save Changes
+                        </button>
+                    </li>
+                ))}
+            </ul>
+
+            {/* Add New Document */}
+            <div className="card mt-4 shadow-sm">
+                <div className="card-body">
+                    <h5 className="card-title">Add New Document</h5>
+
+                    <input
+                        type="text"
+                        value={newDocId}
+                        onChange={(e) => setNewDocId(e.target.value)}
+                        placeholder="Document ID"
+                        className="form-control mb-3"
+                    />
+
+                    {/* Dynamic Field Inputs */}
+                    {Object.entries(newDocFields).map(([key, value]) => (
+                        <div key={key} className="mb-2 row">
+                            <label className="col-sm-3 col-form-label">{key}:</label>
+                            <div className="col-sm-9">
+                                <input
+                                    type="text"
+                                    value={value}
+                                    onChange={(e) =>
+                                        handleNewFieldChange(key, e.target.value)
+                                    }
+                                    className="form-control"
+                                />
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Add New Field */}
+                    <button
+                        onClick={() =>
+                            handleNewFieldChange(
+                                `field${Object.keys(newDocFields).length + 1}`,
+                                ''
+                            )
+                        }
+                        className="btn btn-outline-primary me-2"
+                    >
+                        Add Field
+                    </button>
+
+                    {/* Create New Document */}
+                    <button
+                        onClick={handleAddNewDocument}
+                        className="btn btn-primary"
+                    >
+                        Create Document
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}

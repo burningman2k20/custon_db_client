@@ -11,3 +11,12 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.clickable {
+  font-weight: 500;
+  color: #007bff;
+}
+
+.clickable:hover {
+  text-decoration: underline;
+}
