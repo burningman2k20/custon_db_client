@@ -2,8 +2,10 @@ import axios from "axios";
 import { api } from './AuthService'
 import Swal from "sweetalert2";
 
-export const API_URL = "https://custon-db-rest-api-297546668637.us-central1.run.app/collections/"
-// "http://10.0.0.202:3000/collections/"; // Update this if needed
+export const API_URL =
+    // "https://db-service-145948873972.northamerica-northeast1.run.app/collections/"
+    // "https://custon-db-rest-api-297546668637.us-central1.run.app/collections/"
+    "http://10.0.0.202:3000/collections/"; // Update this if needed
 
 
 // export const getCollections = async () => {

@@ -48,7 +48,7 @@ const FileManager = () => {
 
     const fetchUserStorage = async () => {
         try {
-            const res = await api.get(`${API_URL}/user/storage`
+            const res = await api.get(`${API_URL}user/storage`
                 // "http://localhost:3000/user/storage"
                 // , {
                 // headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -66,7 +66,7 @@ const FileManager = () => {
         let sizes: { [key: string]: string } = {};
         for (const file of files) {
             try {
-                const res = await api.get(`${API_URL}/filesize/${file}`
+                const res = await api.get(`${API_URL}filesize/${file}`
                     // `http://localhost:3000/filesize/${file}`
                 );
                 sizes[file] = res.data.size;
@@ -99,7 +99,7 @@ const FileManager = () => {
 
     const handleDownload = async (filename: string) => {
         try {
-            const response = await api.get(`/files/${filename}`
+            const response = await api.get(`${API_URL}files/${filename}`
                 // , {
                 // headers: { Authorization: `Bearer ${token}` },
                 // responseType: "blob",
@@ -131,7 +131,7 @@ const FileManager = () => {
 
     const viewFile = async (filename: string) => {
         try {
-            const res = await axios.get(`${API_URL}/files/${filename}`
+            const res = await axios.get(`${API_URL}files/${filename}`
                 // `http://10.0.0.202:3000/files/${filename}`
                 , {
                     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
