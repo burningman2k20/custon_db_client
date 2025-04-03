@@ -5,7 +5,7 @@ import Items from './components/Items';
 
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 // import Collections from "./components/Collections";
-import CollectionDetail from "./components/CollectionDetail";
+// import CollectionDetail from "./components/CollectionDetail";
 import EditDocument from './components/EditDocument';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -18,6 +18,7 @@ import FileManager from './components/FileManager';
 import NewCollectionDetail from './components/NewCollectionDetail';
 import CollectionDetail2 from './components/CollectionDetail2';
 import { Dashboard } from './components/dashboard';
+import CollectionDetail from './components/CollectionDetail3';
 
 const App = () => {
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
@@ -106,7 +107,7 @@ const App = () => {
             } /> */}
 
             {/* Route for collections and subcollections */}
-            <Route path="/collections/:name/" element={
+            <Route path="/collections/:collectionName/" element={
               <ProtectedRoute>
                 <CollectionDetail />
               </ProtectedRoute>}

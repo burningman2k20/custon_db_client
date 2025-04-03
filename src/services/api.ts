@@ -2,7 +2,7 @@ import axios from "axios";
 import { api } from './AuthService'
 import Swal from "sweetalert2";
 
-export const API_URL =
+export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-projects-f38fd2f8.vercel.app/"
     // "https://db-service-145948873972.northamerica-northeast1.run.app/collections/"
     // "https://custon-db-rest-api-297546668637.us-central1.run.app/collections/"
     "http://10.0.0.202:3000/collections/"; // Update this if needed
@@ -95,9 +95,9 @@ export const toast = async (message: string = "", type: string = "success") => {
         }
     });
 
-    if (type == 'ok') Toast.fire({
+    if (type === 'ok') Toast.fire({
         icon: 'success',
         title: message
     });
-    if (type == "error") Toast.fire({ icon: 'error', title: message });
+    if (type === "error") Toast.fire({ icon: 'error', title: message });
 }

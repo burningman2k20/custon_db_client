@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import _ from 'lodash';
 import {
     getDocuments,
     updateDocument,
@@ -10,7 +11,7 @@ import {
 
 import Swal from 'sweetalert2';
 import { TIMEOUT } from 'dns';
-import { Button, Form } from 'react-bootstrap';
+import { Button, Dropdown, Form, Modal } from 'react-bootstrap';
 
 export default function CollectionDetail() { // { collectionName }: { collectionName: string }
     const { name, name2, name3 } = useParams<{ name: string, name2: string, name3: string }>();
@@ -119,6 +120,17 @@ export default function CollectionDetail() { // { collectionName }: { collection
         });
     };
 
+    const handleDeleteArrayField = (docId: string, path: string, index: number) => {
+        setDocuments((prev) => {
+            // Array(prev[docId]).splice(index, 1);
+            const updatedDoc = { ...prev[docId] };
+            // const update = Array(updatedDoc[docId]).splice(index, 1);
+            // alert(update)
+            // deleteNestedValue(updatedDoc[index], path);
+            return { ...prev, [docId]: updatedDoc };
+        });
+    };
+
     const handleSave = async (docId: string) => {
         try {
             await updateDocument(name!, docId, documents[docId]);
@@ -161,6 +173,9 @@ export default function CollectionDetail() { // { collectionName }: { collection
                 break;
             case 'object':
                 setNestedValue1(documents, nestedPath, {});
+                break;
+            case 'array':
+                setNestedValue1(documents, nestedPath, []);
                 break;
 
         }
@@ -258,14 +273,162 @@ export default function CollectionDetail() { // { collectionName }: { collection
         alert(Boolean(value));
     }
 
+    const handleAddToArray = (docId: string, path: string, newValue: any) => {
+        setDocuments((prevDocs) => {
+            const newDocs = { ...prevDocs };
+            const array = _.get(newDocs[docId], path, []);
+
+            if (Array.isArray(array)) {
+                array.push(newValue); // Add new item
+                _.set(newDocs[docId], path, array);
+            }
+
+            return newDocs;
+        });
+    };
+
+    const [show, setShow] = useState(false);
+
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
+
     // Recursive render for nested fields
-    const renderFields = (data: any, path = '', docId: string) => {
+    const renderFields = (data: any, path = '', docId: string, show1 = true) => {
         return Object.entries(data).map(([key, value], index) => {
             const newPath = path ? `${path}.${key}` : key;
 
             if (typeof value === 'object' && value !== null) {
                 return (
+
+
                     <div key={newPath} className="ms-3 mt-2 col-sm-11">
+
+                        {/* {show1 === true && { */}
+                        <Modal
+                            show={show == true && show1 == true}
+                            onHide={handleClose}
+                            backdrop="static"
+                            keyboard={false}
+                        >
+                            <Modal.Header closeButton>
+                                <Modal.Title>Sub Collection : {newPath} </Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                {Object.entries(value).map(([key1, value1], index) =>
+                                (
+                                    renderFields(value, newPath, docId, false)
+                                    // <div>{key1} = {String(value1)}</div>
+
+                                ))}
+                                <p></p>
+
+                            </Modal.Body>
+                            <Modal.Footer>
+
+                                {/* Dropdown */}
+                                <Dropdown>
+                                    <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                        {newSubFieldType}
+                                    </Dropdown.Toggle>
+
+                                    <Dropdown.Menu>
+                                        <Dropdown.Item onClick={() => {
+                                            // alert('selected first');
+                                            setNewSubFieldType('string');
+                                        }} href="#/action-1">String</Dropdown.Item>
+                                        <Dropdown.Item onClick={() => {
+                                            // alert('selected first');
+                                            setNewSubFieldType('number');
+                                        }} href="#/action-1">Number</Dropdown.Item>
+                                        <Dropdown.Item onClick={() => {
+                                            // alert('selected first');
+                                            setNewSubFieldType('boolean');
+                                        }} href="#/action-1">Boolean</Dropdown.Item>
+                                        <Dropdown.Item onClick={() => {
+                                            // alert('selected first');
+                                            setNewSubFieldType('object');
+                                        }} href="#/action-1">Object</Dropdown.Item>
+                                    </Dropdown.Menu>
+                                </Dropdown>
+
+                                <div className="col-sm-5">
+                                    <input
+                                        type="text"
+                                        value={nestedPath}
+                                        onChange={(e) => setNestedPath(e.target.value)}
+                                        placeholder="Path (e.g., parent.child.key)"
+                                        className="form-control"
+                                    />
+                                </div>
+
+                                {newSubFieldType === 'number' && (
+                                    <div className="col-sm-4">
+                                        <input
+                                            type="number"
+                                            value={nestedValue}
+                                            pattern="\d*"
+                                            inputMode='numeric'
+                                            onChange={(e) => {
+
+                                                // setNestedValue(nestedValue);
+                                                setNestedValue(convertValue(e.target.value, 'number'));
+                                                // setNestedValue1(documents, nestedPath, nestedValue);
+                                                setNestedValue1(documents, nestedPath, convertValue(e.target.value, 'number'));
+                                            }
+                                            }
+                                            placeholder="Value"
+                                            className="form-control"
+                                        />
+                                    </div>
+                                )}
+
+                                {newSubFieldType === 'boolean' && (
+                                    <div className="col-sm-4">
+                                        <input
+                                            className="form-check"
+                                            type="checkbox"
+                                            value={nestedValue}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+
+                                                // setNestedValue(nestedValue);
+                                                setNestedValue(e.target.checked);
+                                                // setNestedValue1(documents, nestedPath, nestedValue);
+                                                setNestedValue1(documents, nestedPath, e.target.checked);
+                                            }
+                                            }
+                                            placeholder="Value"
+                                        />
+                                    </div>
+                                )}
+
+                                {newSubFieldType === 'string' && (
+                                    <div className="col-sm-4">
+                                        <input
+                                            type="text"
+                                            value={nestedValue}
+                                            onChange={(e) => {
+
+                                                // setNestedValue(nestedValue);
+                                                setNestedValue(convertValue(e.target.value, newSubFieldType));
+                                                // setNestedValue1(documents, nestedPath, nestedValue);
+                                                setNestedValue1(documents, nestedPath, convertValue(e.target.value, newSubFieldType));
+                                            }
+                                            }
+                                            placeholder="Value"
+                                            className="form-control"
+                                        />
+                                    </div>
+                                )}
+
+                                {/*  */}
+                                <Button className="btn btn-outline-primary" onClick={handleAddNewField}>Add</Button>
+                                <Button variant="secondary" onClick={handleClose}>
+                                    Close
+                                </Button>
+                                {/* <Button variant="primary">Understood</Button> */}
+                            </Modal.Footer>
+                        </Modal>
+
                         {/* <div>{name} {name2} {name3} </div> */}
                         {/* <span
                             className="clickable"
@@ -278,7 +441,15 @@ export default function CollectionDetail() { // { collectionName }: { collection
                         </span> */}
                         <div className="row">
                             <div className="col-sm-2">
+
                                 <strong>{key}:   </strong>
+                                <button className="btn btn-primary" onClick={() => {
+
+                                    // alert(name + '/' + docId + '/' + key);
+                                    setNestedPath(name + '.' + docId + '.' + key + '.');
+                                    // handleShow();
+                                    // displaySubCollection(data, docId);
+                                }}>sub</button>
                             </div>
                             <div className="col-sm-1">
                                 <button className="btn btn-primary" onClick={() => {
@@ -290,14 +461,34 @@ export default function CollectionDetail() { // { collectionName }: { collection
                             <div className="col-sm-1">
                                 <button className="btn btn-danger" onClick={() => {
                                     // alert('deleted sub collection');
+                                    // alert(key);
+
+                                    // if (typeof value === 'object' && Array.isArray(value)) {
+                                    //     alert('delete array item');
+                                    // } else {
                                     handleDeleteField(docId, key);
+                                    // }
                                 }}>X</button>
                             </div>
+
+                            {typeof value === 'object' && Array.isArray(value) && value !== null && (
+                                <button className="btn btn-success col-sm-1" onClick={() => {
+                                    handleChangePath(docId + '.' + key + '.' + value.length);
+                                    setNewFieldType('Field');
+                                }
+                                }>Add</button>
+                            )
+                            }
                         </div>
-                        {renderFields(value, newPath, docId)}
+                        {renderFields(value, newPath, docId, true)}
                     </div>
                 );
+            } else if (typeof value === 'object' && Array.isArray(value)) {
+                return (
+                    <div>is array</div>
+                )
             }
+
             const displayPath = newPath.substring(newPath.indexOf('.') + 1);
             return (
                 <div key={newPath} className="row mb-3">
@@ -366,7 +557,18 @@ export default function CollectionDetail() { // { collectionName }: { collection
                     <div className="col-sm-2">
                         <button
                             className="btn btn-danger"
-                            onClick={() => handleDeleteField(docId, newPath)}
+                            onClick={() => {
+                                // alert(Array.isArray(value))
+                                // if (typeof value === 'object' && Array.isArray(data)) {
+                                // alert('delete array item ' + index);
+                                // data.splice(index, 1);
+                                // alert(data[index]);
+                                // handleDeleteArrayField(docId, newPath, index)
+                                // } else {
+                                handleDeleteField(docId, newPath)
+                                // }
+                            }
+                            }
                         >
                             ✕
                         </button>
@@ -375,6 +577,35 @@ export default function CollectionDetail() { // { collectionName }: { collection
             );
         });
     };
+
+    const updateNestedArray = (obj: any, path: string, newValue: any) => {
+        const keys = path.split(".");
+        let current = obj;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+            const key = keys[i].replace(/\[\d+\]/g, ""); // Remove index brackets for object keys
+            current[key] = current[key] || {};
+            current = current[key];
+        }
+
+        const lastKey = keys[keys.length - 1];
+        if (!current[lastKey]) {
+            current[lastKey] = [];
+        }
+
+        if (Array.isArray(current[lastKey])) {
+            current[lastKey].push(newValue);
+        }
+    };
+
+    const handleAddToArrayManual = (docId: string, path: string, newValue: any) => {
+        setDocuments((prevDocs) => {
+            const newDocs = { ...prevDocs };
+            updateNestedArray(newDocs[docId], path, newValue);
+            return newDocs;
+        });
+    };
+
 
     return (
         <div className="container mt-4">
@@ -402,7 +633,7 @@ export default function CollectionDetail() { // { collectionName }: { collection
                                 </button>
                             </div>
                         </div>
-                        {renderFields(fields, '', docId)}
+                        {renderFields(fields, '', docId, true)}
 
                         <div className="mt-2">
                             <button
@@ -536,6 +767,25 @@ export default function CollectionDetail() { // { collectionName }: { collection
                                     </div>
                                 )}
 
+                                {/* {newSubFieldType === 'array' && (
+                                    <div className="col-sm-4">
+                                        <input
+                                            type="text"
+                                            value={nestedValue}
+                                            onChange={(e) => {
+                                                // handleAddToArray(newDocId, nestedPath, nestedValue)
+                                                // setNestedValue(nestedValue);
+                                                // setNestedValue(convertValue(e.target.value, newSubFieldType));
+                                                // setNestedValue1(documents, nestedPath, nestedValue);
+                                                // setNestedValue1(documents, nestedPath, convertValue(e.target.value, newSubFieldType));
+                                            }
+                                            }
+                                            placeholder="Value"
+                                            className="form-control"
+                                        />
+                                    </div>
+                                )} */}
+
 
 
 
@@ -552,8 +802,8 @@ export default function CollectionDetail() { // { collectionName }: { collection
                                         <option value="number">Number</option>
                                         <option value="boolean">Boolean</option>
                                         <option value="object">Object</option>
-                                        {/* <option value="array">Array</option>
-                                        <option value="subcollection">Sub Collection</option>  */}
+                                        <option value="array">Array</option>
+                                        {/*<option value="subcollection">Sub Collection</option>  */}
                                     </select>
                                 </div>
                                 <div className="col-sm-3">
