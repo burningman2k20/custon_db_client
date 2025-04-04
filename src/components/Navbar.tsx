@@ -9,8 +9,8 @@ function Navbar() {
                 <a className="navbar-brand">
                     Custom Rest API Database
                 </a>
-                {user! && (
-                    <a>{user?.email}</a>
+                {user && (
+                    <p className="user-header">User : {user.email}</p>
                 )}
 
                 <div className="d-flex">

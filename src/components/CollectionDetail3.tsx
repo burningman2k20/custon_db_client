@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Button, Form, Modal, Table, Collapse } from "react-bootstrap";
+import { Button, Form, Modal, Table, Collapse, ModalDialog } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { API_URL, createDocument, deleteDocument, getDocuments, toast, updateDocument } from "../services/api";
 import { api } from "../services/AuthService";
@@ -42,9 +42,26 @@ const CollectionDetail = () => {
     const [subDoc, setSubDoc] = useState<string | null>(null);
     const [SubValue, setSubValue] = useState<string | null>(null);
 
+    const [showModal, setShowModal] = useState(false);
+    const [modalContent, setModalContent] = useState("");
+    const [modalKey, setModalKey] = useState("");
+    const [modalValue, setModalValue] = useState<Record<string, any>>();
+
+    const [checkEdit, setCheckEdit] = useState<Record<number, Boolean>>();
+
     useEffect(() => {
         fetchDocuments();
     }, [collectionName]);
+
+    const openModal = (content: string, key: string, value: any, docId: string) => {
+        setSubDocId(docId);
+        setModalKey(key);
+        setModalValue(value);
+        setModalContent(content);
+        setShowModal(true);
+    };
+
+    const closeModal = () => setShowModal(false);
 
     const toggleExpand = (fieldKey: string) => {
         setExpandedFields((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
@@ -396,9 +413,26 @@ const CollectionDetail = () => {
                                                                         )}
                                                                         {typeof subValue === 'object' && (
                                                                             <div>
-                                                                                <button className="btn btn-outline-info" onClick={() => { setSubObj(JSON.stringify(subValue, null, 2)) }}>Edit</button>
+                                                                                {/* <button className="btn btn-outline-info" onClick={() => { setSubObj(JSON.stringify(subValue, null, 2)) }}>Edit</button> */}
+                                                                                {/* {typeof value === 'object' && Array.isArray(value) && Array.isArray(subValue) && ( */}
+                                                                                <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue, docId)}>View</button>
+                                                                                {/* )} */}
 
-                                                                                <Form.Control
+                                                                                {/* {typeof value === 'object' && typeof subValue === 'object' && !Array.isArray(value) && !Array.isArray(subValue) && (
+                                                                                    <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>Edit 1</button>
+                                                                                )}
+
+                                                                                {typeof value === 'object' && typeof subValue === 'object' && !Array.isArray(value) && Array.isArray(subValue) && (
+                                                                                    <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>Edit 2</button>
+                                                                                )} */}
+
+                                                                                {/* {typeof value === 'object' && !Array.isArray(value) && (
+                                                                                    <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>Edit 2</button>
+                                                                                )} */}
+
+
+                                                                                {/* <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>View</button> */}
+                                                                                {/* <Form.Control
                                                                                     type="text"
                                                                                     value={subObj}
                                                                                     // {JSON.stringify(subValue, null, 2)}
@@ -409,16 +443,16 @@ const CollectionDetail = () => {
                                                                                     onKeyDown={(e) => {//{ return }
                                                                                         if (e.key === 'Enter') {
                                                                                             // alert("enter")
-                                                                                            handleFieldChange(docId, field, {
-                                                                                                ...value,
-                                                                                                [subKey]: JSON.parse(subObj)
+                                                                                            // handleFieldChange(docId, field, {
+                                                                                            //     ...value,
+                                                                                            //     [subKey]: JSON.parse(subObj)
 
-                                                                                            })
+                                                                                            // })
                                                                                         }
                                                                                     }
 
                                                                                     }
-                                                                                />
+                                                                                />*/}
                                                                             </div>
                                                                         )}
 
@@ -606,10 +640,430 @@ const CollectionDetail = () => {
                 <Modal.Footer>
                 </Modal.Footer>
             </Modal>
-        </div>
+
+
+            {showModal && (
+                <Modal show={showModal} scrollable={true} onHide={closeModal} size="lg">
+                    <Modal.Header closeButton closeLabel="Close">
+                        <Modal.Title>View {modalKey} ({typeof modalValue && Array.isArray(modalValue) ? 'Array' : 'Object'})</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <div>
+                            <Table size="md" bordered>
+                                <thead>
+                                    <tr>
+                                        <th>Field</th>
+                                        <th>Value</th>
+                                        <th>Type</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Object.entries(modalValue!).map(([field, value], index) => (
+                                        <>
+                                            <tr key={field}>
+                                                <td>{field}</td>
+                                                <td>
+                                                    {typeof value === 'boolean' && (
+                                                        <div className="mb-3">
+                                                            <Form.Check
+                                                                type="switch"
+                                                                className="form-check"
+                                                                value={value as any}
+
+                                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                                    handleFieldChange(subDocId!, field, {
+                                                                        ...value as Boolean,
+                                                                        [field]: e.target.checked,
+                                                                    })
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                    )}
+                                                    {typeof value === 'number' && (
+                                                        <Form.Control
+                                                            type="number"
+                                                            value={value as any}
+
+                                                            onChange={(e) =>
+                                                                handleFieldChange(subDocId!, field, {
+                                                                    ...value as Number,
+                                                                    [field]: Number(e.target.value),
+                                                                })
+                                                            }
+                                                        />
+                                                    )}
+                                                    {typeof value === 'string' && (
+                                                        <Form.Control
+                                                            type="text"
+                                                            value={String(value)}
+
+                                                            onChange={(e) =>
+                                                                handleFieldChange(subDocId!, field, {
+                                                                    ...value as String,
+                                                                    [field]: e.target.value,
+                                                                })
+                                                            }
+                                                        />
+                                                    )}
+                                                    {typeof value === 'object' && (
+                                                        <div>
+                                                            <Table bordered>
+                                                                <thead>
+                                                                    <th>Field</th>
+                                                                    <th>Value</th>
+                                                                    <th>Type</th>
+                                                                    <th>Actions</th>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {Object.entries(value).map(([field1, value1]) => (
+                                                                        <>
+                                                                            <tr>
+                                                                                <td>{field1}</td>
+                                                                                <td>
+                                                                                    {String(value1)}
+                                                                                </td>
+                                                                                <td>
+                                                                                    {typeof value1}
+
+                                                                                </td>
+                                                                                <td><Button variant="danger" size="sm">Delete</Button></td>
+
+                                                                            </tr>
+                                                                        </>
+                                                                    ))}
+                                                                </tbody>
+                                                            </Table>
+                                                            {/* <button className="btn btn-outline-info" onClick={() => { setSubObj(JSON.stringify(subValue, null, 2)) }}>Edit</button> */}
+                                                            {/* {typeof value === 'object' && Array.isArray(value) && Array.isArray(subValue) && ( */}
+                                                            {/* <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>View</button> */}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td>{typeof value}</td>
+                                                <td>
+                                                    <div className="">
+                                                        {typeof value === 'object' && (
+                                                            <Button variant="success" size="sm" onClick={() => {
+                                                                alert(index);
+                                                            }}>Add</Button>
+                                                        )}
+                                                        <Button variant="warning" size="sm">Delete Field</Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                        </>
+
+                                    ))}
+                                </tbody>
+                            </Table>
+                        </div>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button>Add</Button>
+                        <Button>Help</Button>
+                    </Modal.Footer>
+                    <Modal.Footer>
+                        <p>something goes here</p>
+                    </Modal.Footer>
+
+
+                </Modal>
+            )}
+
+            {/* Modal Component */}
+            {showEditObject && (
+                <Modal show={showModal} scrollable={true} onHide={closeModal} size="lg">
+                    <Modal.Header closeButton>
+                        <Modal.Title>Modal Title</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {/* {modalContent} */}
+                        {/* <Table>
+                            <thead>
+                                <tr>
+                                    <th><strong>Index {modalKey}</strong></th>
+                                    <th>Type {typeof modalValue}</th>
+                                </tr>
+                            </thead>
+                            <tbody> */}
+
+                        <div className="d-flex">
+                            <strong>Sub Collection Name : </strong> <p>{modalKey}</p>
+                        </div>
+
+                        {Array.isArray(modalValue) && (
+                            <div className="d-flex">
+                                <strong>Sub Collection Type : </strong> <p>Array</p>
+                            </div>
+                        )
+                        }
+
+                        {!Array.isArray(modalValue) && (
+                            <div className="d-flex">
+                                <strong>Sub Collection Type : </strong> <p> Object</p>
+                            </div>
+
+                        )
+
+                        }
+                        <Table bordered>
+
+                            {/* {typeof modalValue !== 'object' && !Array.isArray(modalValue) && ( */}
+                            <thead>
+                                <tr>
+                                    <th>Index</th>
+                                    <th>Field</th>
+                                    <th>Value</th>
+                                    <th>Type</th>
+                                    {/* <th>Actions</th> */}
+                                </tr>
+                            </thead>
+
+                            {/* )}
+                            {typeof modalValue === 'object' && !Array.isArray(modalValue) && (
+                                <thead>
+                                    <tr>
+                                        <th>New Index</th>
+                                        <th>Field</th>
+                                        <th>Value</th>
+                                        <th>Type</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+
+                            )} */}
+
+
+
+                            <tbody>
+
+                                {Object.entries(modalValue!).map(([field, value]) => {
+                                    return (
+                                        <>
+                                            <tr key={field}>
+                                                {typeof value === 'string' && (
+                                                    <>
+                                                        <td></td>
+                                                        <td> <Form.Label>{field}</Form.Label></td>
+                                                        <td>
+                                                            <Form.Group>
+
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    value={value}
+                                                                // onChange={(e) => setNewFieldName(e.target.value)}
+                                                                />
+
+
+                                                            </Form.Group>
+
+                                                        </td>
+                                                        <td>{typeof value}</td>
+                                                        {/* <td>
+                                                            <button className="btn btn-danger">Delete</button>
+                                                        </td> */}
+                                                    </>
+                                                )}
+
+                                                {typeof value === 'boolean' && (
+                                                    <>
+                                                        <td></td>
+                                                        <td>
+                                                            <Form.Label>{field}</Form.Label>
+                                                        </td>
+                                                        <Form.Group>
+
+
+                                                            <td>
+
+                                                                <Form.Check
+
+                                                                    // type="text"
+                                                                    checked={value}
+                                                                // onChange={(e) => setNewFieldName(e.target.value)}
+                                                                />
+
+                                                            </td>
+
+
+                                                        </Form.Group>
+                                                        <td>
+                                                            {typeof value}
+                                                        </td>
+                                                        {/* <td>
+                                                            <button className="btn btn-danger">Delete</button>
+                                                        </td> */}
+                                                    </>
+
+                                                )}
+
+                                                {typeof value === 'number' && (
+                                                    <>
+                                                        <td></td>
+                                                        <td><Form.Label>{field}</Form.Label></td>
+                                                        <td>
+                                                            <Form.Group>
+
+
+                                                                <Form.Control
+                                                                    type="number"
+                                                                    value={value}
+                                                                // onChange={(e) => setNewFieldName(e.target.value)}
+                                                                />
+
+
+
+                                                            </Form.Group>
+                                                        </td>
+                                                        {/* <td>
+                                                            <button className="btn btn-danger">Delete</button>
+                                                        </td> */}
+
+                                                    </>
+                                                )
+                                                }
+
+                                                {typeof value === 'object' && (
+                                                    <thead>
+                                                        {/* <th>Index</th>
+                                                        <th>Field Name</th>
+                                                        <th>Field Value</th>
+                                                        <th>Field Type</th>
+                                                        <th>Actions</th> */}
+                                                    </thead>
+                                                )
+                                                }
+
+                                                {typeof value === 'object' && (
+
+                                                    Object.entries(value!).map(([field1, value1]) => {
+
+                                                        return (
+                                                            <Table bordered>
+                                                                <tr>
+                                                                    <td>{field}</td>
+
+
+                                                                    {typeof value1 === 'string' && (
+                                                                        <>
+
+                                                                            <td><Form.Label>{field1}</Form.Label></td>
+                                                                            <td>
+                                                                                {/* <Form.Group> */}
+
+
+                                                                                <Form.Control
+                                                                                    className=""
+                                                                                    type="text"
+                                                                                    value={value1}
+                                                                                // onChange={(e) => setNewFieldName(e.target.value)}
+                                                                                />
+
+
+
+                                                                                {/* </Form.Group> */}
+                                                                            </td>
+                                                                            <td>{typeof value1}</td>
+                                                                            {/* <td>
+                                                                                <button className="btn btn-danger">Delete</button>
+                                                                            </td> */}
+
+                                                                        </>
+
+                                                                        // <p>{field1} String {String(value1)}</p>
+                                                                    )}
+                                                                    {typeof value1 === 'boolean' && (
+                                                                        <>
+                                                                            <td> <Form.Label>{field1}</Form.Label></td>
+                                                                            <td>
+                                                                                <Form.Group>
+                                                                                    <Form.Check
+                                                                                        className=""
+                                                                                        // type="text"
+                                                                                        checked={value1}
+                                                                                    // onChange={(e) => setNewFieldName(e.target.value)}
+                                                                                    />
+                                                                                </Form.Group>
+                                                                            </td>
+                                                                            <td>{typeof value1}</td>
+                                                                            {/* <td>
+                                                                                <button className="btn btn-danger">Delete</button>
+                                                                            </td> */}
+
+                                                                        </>
+                                                                    )}
+
+                                                                    {typeof value1 === 'number' && (
+                                                                        <>
+                                                                            <td>
+                                                                                <Form.Label>{field1}</Form.Label>
+                                                                            </td>
+                                                                            <Form.Group>
+                                                                                <td>
+
+                                                                                    <Form.Control
+                                                                                        className=""
+                                                                                        type="number"
+                                                                                        value={value1}
+                                                                                    // onChange={(e) => setNewFieldName(e.target.value)}
+                                                                                    />
+
+                                                                                </td>
+
+                                                                            </Form.Group>
+                                                                            <td>{typeof value1}</td>
+                                                                            {/* <td>
+                                                                                <button className="btn btn-danger">Delete</button>
+                                                                            </td> */}
+
+                                                                        </>
+                                                                    )
+                                                                    }
+
+                                                                </tr>
+                                                            </Table>
+                                                        )
+
+                                                    }
+
+                                                    ) // end Objects.entries
+
+                                                )
+
+                                                }
+
+                                            </tr>
+                                        </>
+                                    )
+                                })}
+                            </tbody>
+
+                        </Table>
+
+
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => {
+
+                        }}>
+                            Add
+                        </Button>
+                        <Button variant="secondary" onClick={closeModal}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            )
+            }
+        </div >
 
 
     );
+
+
 };
 
 export default CollectionDetail;

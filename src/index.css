@@ -20,3 +20,7 @@ code {
 .clickable:hover {
   text-decoration: underline;
 }
+
+.user-header {
+  color: #61dafb;
+}
