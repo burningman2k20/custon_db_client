@@ -19,6 +19,10 @@ import NewCollectionDetail from './components/NewCollectionDetail';
 import CollectionDetail2 from './components/CollectionDetail2';
 import { Dashboard } from './components/dashboard';
 import CollectionDetail from './components/CollectionDetail3';
+import { Profile } from './components/Profile';
+import { DocumentsList } from './components/DocumentsList';
+import { DocumentView } from './components/DocumentView';
+import { CollectionWrapper } from './components/CollectionWrapper';
 
 const App = () => {
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
@@ -85,6 +89,11 @@ const App = () => {
                 <Dashboard />
               </ProtectedRoute>
             } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
             {/* <Route path="/collections/:name/:name2/:name3" element={
               <ProtectedRoute>
                 <CollectionDetail />
@@ -107,9 +116,20 @@ const App = () => {
             } /> */}
 
             {/* Route for collections and subcollections */}
-            <Route path="/collections/:collectionName/" element={
+            <Route path="/collections/:collectionName/*" element={
               <ProtectedRoute>
-                <CollectionDetail />
+                {/* <CollectionDetail />
+                 */}
+                <DocumentsList />
+              </ProtectedRoute>}
+            />
+
+            {/* Route for collections and subcollections */}
+            <Route path="/:collectionName/document/:documentName/*" element={
+              <ProtectedRoute>
+                {/* <CollectionDetail />
+                 */}
+                <DocumentView />
               </ProtectedRoute>}
             />
 

@@ -1,7 +1,11 @@
 import { useAuth } from "../context/AuthContext";
+import { Profile } from "./Profile";
 
 function Navbar() {
     const { user, logout } = useAuth();
+
+    const displayName = localStorage.getItem('user');
+    // alert(displayName)
 
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
@@ -10,7 +14,8 @@ function Navbar() {
                     Custom Rest API Database
                 </a>
                 {user && (
-                    <p className="user-header">User : {user.email}</p>
+                    // <Profile />
+                    <a href="/profile" className="user-header">User : {user.displayName}</a>
                 )}
 
                 <div className="d-flex">

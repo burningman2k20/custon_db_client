@@ -1,6 +1,7 @@
 import axios from "axios";
 import { api } from './AuthService'
 import Swal from "sweetalert2";
+import { useState } from "react";
 
 export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-projects-f38fd2f8.vercel.app/"
     // "https://db-service-145948873972.northamerica-northeast1.run.app/collections/"
@@ -13,10 +14,21 @@ export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-proje
 //     return response.data;
 // };
 
+// export const [documentPath, setDocumentPath] = useState("")
+
+export interface DocumentType {
+    [key: string]: any;
+}
+
+export const GetUser = async () => {
+    const response = await api.get(`http://localhost:3000/auth/me`);
+    return response.data;
+
+}
 
 // 👉 Fetch user collections (Authenticated)
 export const getCollections = async () => {
-    const response = await api.get('collections');
+    const response = await api.get(`${API_URL}`);
     return response.data;
 };
 

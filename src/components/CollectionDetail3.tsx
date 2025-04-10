@@ -44,16 +44,20 @@ const CollectionDetail = () => {
 
     const [showModal, setShowModal] = useState(false);
     const [modalContent, setModalContent] = useState("");
+    const [rootDocId, setRootDocId] = useState("");
     const [modalKey, setModalKey] = useState("");
     const [modalValue, setModalValue] = useState<Record<string, any>>();
 
     const [checkEdit, setCheckEdit] = useState<Record<number, Boolean>>();
 
+    const [arrayType, setArrayType] = useState("fields");
+
     useEffect(() => {
         fetchDocuments();
     }, [collectionName]);
 
-    const openModal = (content: string, key: string, value: any, docId: string) => {
+    const openModal = (content: string, key: string, value: any, docId: string, rootDocId: string) => {
+        setRootDocId(rootDocId)
         setSubDocId(docId);
         setModalKey(key);
         setModalValue(value);
@@ -124,6 +128,7 @@ const CollectionDetail = () => {
     };
 
     const handleDeleteField = (docId: string, field: string) => {
+        if (!window.confirm(`Are you sure you want to delete "${field}"?`)) return;
         setDocuments((prevDocs) => {
             const newDoc = { ...prevDocs[docId] };
             delete newDoc[field];
@@ -168,6 +173,7 @@ const CollectionDetail = () => {
 
     const handleSave = async (docId: string) => {
         try {
+            setDocuments(removeNullObjects(documents));
             await updateDocument(collectionName!, docId, documents[docId]);
             // await api.put(`${API_URL}${collectionName}/${docId}`, documents[docId]);
             // alert("Document updated successfully!");
@@ -241,6 +247,7 @@ const CollectionDetail = () => {
 
     // Delete a subfield from an object field.
     const handleDeleteSubField = (docId: string, field: string, subKey: string) => {
+        if (!window.confirm(`Are you sure you want to delete "${field}"?`)) return;
         setDocuments((prevDocs) => {
             const currentObject = { ...(prevDocs[docId][field] || {}) };
             delete currentObject[subKey];
@@ -263,6 +270,145 @@ const CollectionDetail = () => {
     const openNewDocModal = () => {
         setShowNewDocModal(true);
     };
+
+    // Safely get nested value (with default fallback)
+    function getNestedValue(obj: any, keys: string[]): any {
+        return keys.reduce((o, k) => (o && o[k] !== undefined ? o[k] : undefined), obj);
+    }
+
+    // Safely set nested value. If a nested property does not exist, initialize it.
+    function setNestedValue(obj: any, keys: string[], value: any): any {
+        if (!obj) obj = {};
+        let current = obj;
+        keys.forEach((key, index) => {
+            if (index === keys.length - 1) {
+                current[key] = value;
+            } else {
+                if (current[key] === undefined) {
+                    // If next key is a number (for array index), initialize as an array; otherwise, object.
+                    current[key] = isNaN(Number(keys[index + 1])) ? {} : [];
+                }
+                current = current[key];
+            }
+        });
+        return obj;
+    }
+    // 🟩 Add an item to a nested array
+    function addToNestedArray(data: any, arrayName: string, objectIndex: number, nestedArrayName: string, value: any) {
+        // Get the array: data[arrayName][objectIndex][nestedArrayName]
+        const arrayPath = [arrayName, String(objectIndex), nestedArrayName];
+        let array = getNestedValue(data[subDocId!], arrayPath);
+        if (!array) {
+            // If the nested array doesn't exist, initialize it
+            data = setNestedValue(data[subDocId!], arrayPath, []);
+            array = getNestedValue(data[subDocId!], arrayPath);
+        }
+        if (!Array.isArray(array)) {
+            throw new Error(`Expected an array at path ${arrayPath.join(".")}`);
+        }
+        array.push(value);
+        // alert(array.toString());
+        return data;
+    }
+
+    // 🟨 Update an item in a nested array
+    function updateNestedArrayItem(data: any, arrayName: string, objectIndex: number, nestedArrayName: string, itemIndex: number, newValue: any) {
+        const arrayPath = [arrayName, String(objectIndex), nestedArrayName];
+        let array = getNestedValue(data, arrayPath);
+        if (!array || !Array.isArray(array)) {
+            throw new Error(`No array found at path ${arrayPath.join(".")}`);
+        }
+        array[itemIndex] = newValue;
+        return data;
+    }
+
+    // 🟥 Delete an item from a nested array
+    function deleteFromNestedArray(data: any, docId: string, arrayName: string, objectIndex: number, nestedArrayName: string, itemIndex: number) {
+        // const arrayPath = [field, String(objectIndex), nestedArrayName];
+        // let array = getNestedValue(data, arrayPath);
+        // alert(arrayPath)
+        // alert(array)
+
+        const arrayPath = [arrayName, String(objectIndex), nestedArrayName];
+        let array = getNestedValue(data, arrayPath);
+        if (!array || !Array.isArray(array)) {
+            throw new Error(`No array found at path ${arrayPath.join(".")}`);
+        }
+        array.splice(itemIndex, 1);
+        return data;
+
+    }
+
+    // Helper: Get value from path
+    const getValueFromPath = (obj: any, path: string) => {
+        return path.split(".").reduce((acc, key) => {
+            const k = isNaN(Number(key)) ? key : Number(key);
+            return acc?.[k];
+        }, obj);
+    };
+
+    // Helper: Set value at path
+    const setValueAtPath = (obj: any, path: string, value: any) => {
+        const keys = path.split(".");
+        const newData = { ...obj };
+        // structuredClone(obj);
+
+        let current: any = newData;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+            const key = isNaN(Number(keys[i])) ? keys[i] : Number(keys[i]);
+            if (!(key in current)) {
+                current[key] = isNaN(Number(keys[i + 1])) ? {} : [];
+            }
+            current = current[key];
+        }
+
+        const lastKey = isNaN(Number(keys.at(-1)!)) ? keys.at(-1)! : Number(keys.at(-1)!);
+        current[lastKey] = value;
+        setDocuments(newData);
+        return newData;
+    };
+
+    function deleteValueAtPath(obj: any, path: string): void {
+        const keys = path.split(".");
+
+        const newData = { ...obj };
+        // structuredClone(obj);
+
+        let current: any = newData;
+
+        for (let i = 0; i < keys.length - 1; i++) {
+            current = current[keys[i]];
+            if (!current) return;
+        }
+
+        delete current[keys[keys.length - 1]];
+        // setDocuments(removeNullObjects(newData));
+    }
+
+    function removeNullObjects(obj: any): any {
+        if (Array.isArray(obj)) {
+            return obj
+                .map(removeNullObjects)
+                .filter((item) => item !== null && item !== undefined);
+        }
+
+        if (obj !== null && typeof obj === "object") {
+            const cleaned: Record<string, any> = {};
+            for (const key in obj) {
+                const value = removeNullObjects(obj[key]);
+                if (value !== null && value !== undefined) {
+                    cleaned[key] = value;
+                }
+            }
+
+            // If cleaned object is empty after removing nulls, return null
+            return Object.keys(cleaned).length === 0 ? null : cleaned;
+        }
+
+        return obj;
+    }
+
 
     return (
         <div className="container mt-4">
@@ -354,7 +500,7 @@ const CollectionDetail = () => {
                                                 </div>
                                             ) : fieldType === "object" ? (
                                                 <div>
-                                                    <Table size="sm" bordered>
+                                                    <Table size="sm" bordered striped hover>
                                                         <thead>
                                                             <tr>
                                                                 <th>Key</th>
@@ -413,46 +559,13 @@ const CollectionDetail = () => {
                                                                         )}
                                                                         {typeof subValue === 'object' && (
                                                                             <div>
-                                                                                {/* <button className="btn btn-outline-info" onClick={() => { setSubObj(JSON.stringify(subValue, null, 2)) }}>Edit</button> */}
-                                                                                {/* {typeof value === 'object' && Array.isArray(value) && Array.isArray(subValue) && ( */}
-                                                                                <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue, docId)}>View</button>
-                                                                                {/* )} */}
-
-                                                                                {/* {typeof value === 'object' && typeof subValue === 'object' && !Array.isArray(value) && !Array.isArray(subValue) && (
-                                                                                    <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>Edit 1</button>
-                                                                                )}
-
-                                                                                {typeof value === 'object' && typeof subValue === 'object' && !Array.isArray(value) && Array.isArray(subValue) && (
-                                                                                    <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>Edit 2</button>
-                                                                                )} */}
-
-                                                                                {/* {typeof value === 'object' && !Array.isArray(value) && (
-                                                                                    <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>Edit 2</button>
-                                                                                )} */}
 
 
-                                                                                {/* <button className="btn btn-outline-info" onClick={() => openModal("Sub Collection : " + subKey, subKey, subValue)}>View</button> */}
-                                                                                {/* <Form.Control
-                                                                                    type="text"
-                                                                                    value={subObj}
-                                                                                    // {JSON.stringify(subValue, null, 2)}
+                                                                                <button className="btn btn-outline-info" onClick={() => {
+                                                                                    // setRootDocId(field);
 
-
-                                                                                    onChange={(e) => setSubObj(e.target.value)}
-                                                                                    // JSON.stringify(subValue, null, 2)
-                                                                                    onKeyDown={(e) => {//{ return }
-                                                                                        if (e.key === 'Enter') {
-                                                                                            // alert("enter")
-                                                                                            // handleFieldChange(docId, field, {
-                                                                                            //     ...value,
-                                                                                            //     [subKey]: JSON.parse(subObj)
-
-                                                                                            // })
-                                                                                        }
-                                                                                    }
-
-                                                                                    }
-                                                                                />*/}
+                                                                                    openModal("Sub Collection : " + subKey, subKey, subValue, docId, field)
+                                                                                }}>View</button>
                                                                             </div>
                                                                         )}
 
@@ -471,6 +584,7 @@ const CollectionDetail = () => {
                                                             ))}
                                                         </tbody>
                                                     </Table>
+
                                                     {/* New Subfield Inputs */}
                                                     <Form.Group className="mt-2">
                                                         <Form.Control
@@ -644,12 +758,14 @@ const CollectionDetail = () => {
 
             {showModal && (
                 <Modal show={showModal} scrollable={true} onHide={closeModal} size="lg">
+                    {/* {typeof modalValue && Array.isArray(modalValue) ? setArrayType('objects') : setArrayType('fields')} */}
                     <Modal.Header closeButton closeLabel="Close">
                         <Modal.Title>View {modalKey} ({typeof modalValue && Array.isArray(modalValue) ? 'Array' : 'Object'})</Modal.Title>
+
                     </Modal.Header>
                     <Modal.Body>
                         <div>
-                            <Table size="md" bordered>
+                            <Table size="md" bordered striped hover>
                                 <thead>
                                     <tr>
                                         <th>Field</th>
@@ -659,8 +775,14 @@ const CollectionDetail = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
+
                                     {Object.entries(modalValue!).map(([field, value], index) => (
                                         <>
+                                            {/* {typeof value === 'object' ? (
+                                                setArrayType('objects')
+                                            ) : (
+                                                setArrayType('fields')
+                                            )} */}
                                             <tr key={field}>
                                                 <td>{field}</td>
                                                 <td>
@@ -669,13 +791,20 @@ const CollectionDetail = () => {
                                                             <Form.Check
                                                                 type="switch"
                                                                 className="form-check"
-                                                                value={value as any}
+                                                                checked={value}
+                                                                // value={value as unknown as number}
 
-                                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                                                    handleFieldChange(subDocId!, field, {
-                                                                        ...value as Boolean,
-                                                                        [field]: e.target.checked,
-                                                                    })
+                                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                                    const path = subDocId! + '.' + rootDocId! + '.' + modalKey + '.' + field
+                                                                    // alert(path)
+                                                                    // alert(getValueFromPath(documents, path))
+                                                                    setValueAtPath(documents, path, e.target.checked)
+                                                                    // alert(getValueFromPath(documents, path))
+                                                                }
+                                                                    // handleFieldChange(subDocId!, field, {
+                                                                    //     ...value as Boolean,
+                                                                    //     [field]: e.target.checked,
+                                                                    // })
                                                                 }
                                                             />
                                                         </div>
@@ -686,11 +815,14 @@ const CollectionDetail = () => {
                                                             type="number"
                                                             value={value as any}
 
-                                                            onChange={(e) =>
-                                                                handleFieldChange(subDocId!, field, {
-                                                                    ...value as Number,
-                                                                    [field]: Number(e.target.value),
-                                                                })
+                                                            onChange={(e) => {
+                                                                const path = subDocId! + '.' + rootDocId! + '.' + modalKey + '.' + field
+                                                                setValueAtPath(documents, path, Number(e.target.value))
+                                                            }
+                                                                // handleFieldChange(subDocId!, field, {
+                                                                //     ...value as Number,
+                                                                //     [field]: Number(e.target.value),
+                                                                // })
                                                             }
                                                         />
                                                     )}
@@ -699,17 +831,20 @@ const CollectionDetail = () => {
                                                             type="text"
                                                             value={String(value)}
 
-                                                            onChange={(e) =>
-                                                                handleFieldChange(subDocId!, field, {
-                                                                    ...value as String,
-                                                                    [field]: e.target.value,
-                                                                })
+                                                            onChange={(e) => {
+                                                                const path = subDocId! + '.' + rootDocId! + '.' + modalKey + '.' + field
+                                                                setValueAtPath(documents, path, String(e.target.value))
+                                                            }
+                                                                // handleFieldChange(subDocId!, field, {
+                                                                //     ...value as String,
+                                                                //     [field]: e.target.value,
+                                                                // })
                                                             }
                                                         />
                                                     )}
-                                                    {typeof value === 'object' && (
+                                                    {typeof value === 'object' && value !== null && (
                                                         <div>
-                                                            <Table bordered>
+                                                            <Table bordered striped hover>
                                                                 <thead>
                                                                     <th>Field</th>
                                                                     <th>Value</th>
@@ -717,18 +852,102 @@ const CollectionDetail = () => {
                                                                     <th>Actions</th>
                                                                 </thead>
                                                                 <tbody>
-                                                                    {Object.entries(value).map(([field1, value1]) => (
+                                                                    {Object.entries(value).map(([field1, value1], objIndex) => (
                                                                         <>
                                                                             <tr>
                                                                                 <td>{field1}</td>
                                                                                 <td>
-                                                                                    {String(value1)}
-                                                                                </td>
-                                                                                <td>
-                                                                                    {typeof value1}
+                                                                                    {!Array.isArray(value1) && typeof value1 === 'string' && (
+                                                                                        // <p>{String(value1)}</p>
+                                                                                        <Form.Control
+                                                                                            value={value1}
+                                                                                            type="text"
+
+                                                                                        />
+                                                                                    )}
+                                                                                    {!Array.isArray(value1) && typeof value1 === 'boolean' && (
+                                                                                        // <p>{String(value1)}</p>
+                                                                                        <Form.Check
+                                                                                            checked={value1 as boolean}
+                                                                                            type="switch"
+
+                                                                                        />
+                                                                                    )}
+                                                                                    {!Array.isArray(value1) && typeof value1 === 'number' && (
+                                                                                        // <p>{String(value1)}</p>
+                                                                                        <Form.Control
+                                                                                            value={value1 as number}
+                                                                                            type="number"
+
+                                                                                        />
+                                                                                    )}
 
                                                                                 </td>
-                                                                                <td><Button variant="danger" size="sm">Delete</Button></td>
+                                                                                <td>
+                                                                                    {typeof value1 === 'object'
+                                                                                        && Array.isArray(value1) && value1 !== null &&
+                                                                                        (
+                                                                                            <div>
+                                                                                                {value1.map((item: any, index: number) => (
+                                                                                                    <div key={index} className="d-flex align-items-center mb-2">
+                                                                                                        <Form.Control
+                                                                                                            type="text"
+                                                                                                            value={item}
+                                                                                                            onChange={(e) =>
+                                                                                                                handleArrayChange(subDocId!, field1, index, e.target.value)
+                                                                                                            }
+                                                                                                        />
+                                                                                                        <Button
+                                                                                                            variant="danger"
+                                                                                                            size="sm"
+                                                                                                            className="ms-2"
+                                                                                                            onClick={() => {
+                                                                                                                // alert(documents[subDocId!][index][field1]);
+                                                                                                                // deleteFromNestedArray(documents, subDocId!, field, objIndex, field1, index);
+                                                                                                                if (!window.confirm(`Are you sure you want to delete "${field1}"?`)) return;
+                                                                                                                value1.splice(index, 1);
+
+                                                                                                                handleRemoveArrayItem(subDocId!, field1, index)
+                                                                                                            }
+                                                                                                            }
+                                                                                                        >
+                                                                                                            Remove
+                                                                                                        </Button>
+                                                                                                    </div>
+                                                                                                ))}
+                                                                                                <Form.Control
+                                                                                                    type="text"
+                                                                                                    placeholder="New item"
+                                                                                                    onKeyDown={(e) => {
+                                                                                                        if (e.key === "Enter") {
+                                                                                                            value1.push(e.currentTarget.value)
+                                                                                                            handleAddArrayItem(subDocId!, field1, e.currentTarget.value);
+                                                                                                            e.currentTarget.value = "";
+                                                                                                        }
+                                                                                                    }}
+                                                                                                />
+                                                                                            </div>
+                                                                                        )
+                                                                                    }
+                                                                                    {/* {typeof value1 === 'object'
+                                                                                        && !Array.isArray(value1) &&
+                                                                                        (<p>object</p>)} */}
+
+                                                                                    {!Array.isArray(value1) && value1 !== null && (
+                                                                                        <p>{typeof value1}</p>
+                                                                                    )}
+
+                                                                                    {/* {typeof value1} */}
+
+                                                                                </td>
+                                                                                <td><Button variant="danger" size="sm" onClick={() => {
+                                                                                    const path = subDocId! + '.' + rootDocId! + '.' + modalKey + '.' + field + '.' + field1
+                                                                                    // alert(path)
+                                                                                    // alert(getValueFromPath(documents, path));
+                                                                                    if (!window.confirm(`Are you sure you want to delete "${field1}"?`)) return;
+                                                                                    deleteValueAtPath(documents, path);
+                                                                                }
+                                                                                }>Delete</Button></td>
 
                                                                             </tr>
                                                                         </>
@@ -744,12 +963,71 @@ const CollectionDetail = () => {
                                                 <td>{typeof value}</td>
                                                 <td>
                                                     <div className="">
-                                                        {typeof value === 'object' && (
-                                                            <Button variant="success" size="sm" onClick={() => {
-                                                                alert(index);
-                                                            }}>Add</Button>
+                                                        {Array.isArray(value) && value !== null && (
+                                                            <td>array</td>
                                                         )}
-                                                        <Button variant="warning" size="sm">Delete Field</Button>
+                                                        {typeof value === 'object' && value !== null && (
+                                                            <>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setNewFieldName(e.currentTarget.value);
+                                                                    }
+
+                                                                    }
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            const path = subDocId! + '.' + rootDocId! + '.' + modalKey + '.' + String(index) + '.' + field + '.' + e.currentTarget.value;
+                                                                            // setNewFieldName(e.currentTarget.value);
+                                                                            // setNewFieldValue()
+                                                                            // setValueAtPath(documents, path, e.currentTarget.value);
+                                                                            alert(path);
+                                                                            // modalValue![index][e.currentTarget.value] = ""
+                                                                        }
+
+                                                                    }}
+                                                                />
+                                                                <Form.Select value={newFieldType}
+                                                                    onChange={(e) => setNewFieldType(e.target.value as FieldType)}
+                                                                >
+                                                                    {/* <option>Open this select menu</option> */}
+                                                                    <option value="string">String</option>
+                                                                    <option value="number">Number</option>
+                                                                    <option value="boolean">Boolean</option>
+                                                                </Form.Select>
+                                                                <Button variant="success" size="sm" onClick={() => {
+                                                                    // alert(rootDocId);
+                                                                    const path = subDocId! + '.' + rootDocId! + '.' + modalKey + '.' + String(index) + '.' + newFieldName;// + '.'
+
+                                                                    // alert(path)
+                                                                    // alert(newFieldType);
+                                                                    switch (newFieldType) {
+                                                                        case 'number':
+                                                                            setValueAtPath(documents, path, 0);
+                                                                            break
+                                                                        case 'boolean':
+                                                                            setValueAtPath(documents, path, false);
+                                                                            break
+                                                                        default:
+                                                                            setValueAtPath(documents, path, 'new string');
+                                                                    }
+
+                                                                    // setValueAtPath(documents, path, 'new data');
+                                                                    // alert(getValueFromPath(documents, path + '.' + newFieldName));
+                                                                    // alert(index);
+
+                                                                    // alert(modalValue![index]['fuker']);
+                                                                }}>Add</Button>
+                                                            </>
+                                                        )}
+                                                        <Button variant="warning" size="sm" onClick={() => {
+                                                            const path = subDocId! + '.' + rootDocId! + '.' + modalKey + '.' + field
+                                                            // alert(path)
+                                                            if (!window.confirm(`Are you sure you want to delete "${field}"?`)) return;
+                                                            // alert(getValueFromPath(documents, path));
+                                                            deleteValueAtPath(documents, path);
+                                                        }
+                                                        }>Delete Field</Button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -762,8 +1040,122 @@ const CollectionDetail = () => {
                         </div>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button>Add</Button>
-                        <Button>Help</Button>
+                        {Array.isArray(modalValue!) && (
+                            <Form.Group>
+                                <Form.Label>Array Type</Form.Label>
+                                <Form.Select value={arrayType} onChange={(e) => setArrayType(e.target.value)}>
+                                    <option value="fields">Fields</option>
+                                    <option value="objects">Objects</option>
+                                </Form.Select>
+                            </Form.Group>
+                        )
+                        }
+
+
+
+
+                        {arrayType === 'fields' && (
+                            <>
+                                {/* {Array.isArray(modalValue) ? (
+                                    <Form.Group>
+                                        <Form.Label>Field Value</Form.Label>
+                                        <Form.Control
+                                            type="text"
+                                            onChange={(e) => setNewFieldValue(e.currentTarget.value)}
+                                            value={newFieldValue}
+                                            placeholder='enter value'>
+
+                                        </Form.Control>
+                                    </Form.Group>
+                                ) : ( */}
+                                <Form.Group>
+                                    <Form.Label>Field Name</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        onChange={(e) => setNewFieldName(e.currentTarget.value)}
+                                        value={newFieldName}
+                                        placeholder='field name'>
+
+                                    </Form.Control>
+                                </Form.Group>
+                                {/* )} */}
+
+
+                                <Form.Group>
+                                    <Form.Label>Field Type</Form.Label>
+                                    <Form.Select value={newFieldType}
+                                        onChange={(e) => setNewFieldType(e.target.value as FieldType)}
+                                    >
+                                        {/* <option>Open this select menu</option> */}
+                                        <option value="string">String</option>
+                                        <option value="number">Number</option>
+                                        <option value="boolean">Boolean</option>
+                                    </Form.Select>
+
+                                </Form.Group>
+
+
+                                <Button variant="success" onClick={() => {
+                                    // return
+                                    // documents[subDocId!][modalKey].
+                                    // modalValue!.push({})
+                                    //  // between root and field
+                                    // alert(Array.isArray(modalValue))
+                                    var path = subDocId! + '.' + rootDocId! + '.' + modalKey;// + '.'
+                                    // var path = rootDocId + '.' + modalKey;
+                                    // path += '.' + newFieldName;
+                                    if (Array.isArray(modalValue)) {
+                                        modalValue!.push();
+                                        path += '.' + modalValue!.length;
+                                    }
+                                    if (!Array.isArray(modalValue) && typeof modalValue === 'object') {
+                                        // modalValue!.push();
+                                        path += '.' + newFieldName;
+                                    }
+
+
+                                    // alert(path)
+                                    // alert(path + '.' + newFieldName)
+
+                                    switch (newFieldType) {
+                                        case 'number':
+                                            setValueAtPath(documents, path, Number(newFieldValue));
+                                            break
+                                        case 'boolean':
+                                            setValueAtPath(documents, path, Boolean(newFieldValue));
+                                            break
+                                        default:
+                                            setValueAtPath(documents, path, newFieldValue);
+
+                                    }
+                                    // setValueAtPath(documents, path, newFieldValue)
+                                    setNewFieldValue('')
+                                }
+                                }>Add Field</Button>
+                            </>
+                        )
+                        }
+                        {arrayType === 'objects' && (
+                            <>
+                                <Button variant="success" onClick={() => {
+                                    // documents[subDocId!][modalKey].
+                                    var path = subDocId! + '.' + rootDocId! + '.' + modalKey
+                                    // alert(Array(modalValue![modalKey]).length)
+                                    // alert(path)
+                                    // alert(getValueFromPath(documents, path))
+                                    if (Array.isArray(modalValue)) {
+                                        path += '.' + modalValue!.length;
+                                    }
+
+
+                                    setValueAtPath(documents, path, {})
+                                    // modalValue!.push({})
+                                }
+                                }>Add Object</Button>
+                            </>
+                        )}
+
+                        {/* <Button>Help</Button> */}
                     </Modal.Footer>
                     <Modal.Footer>
                         <p>something goes here</p>
@@ -773,291 +1165,7 @@ const CollectionDetail = () => {
                 </Modal>
             )}
 
-            {/* Modal Component */}
-            {showEditObject && (
-                <Modal show={showModal} scrollable={true} onHide={closeModal} size="lg">
-                    <Modal.Header closeButton>
-                        <Modal.Title>Modal Title</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        {/* {modalContent} */}
-                        {/* <Table>
-                            <thead>
-                                <tr>
-                                    <th><strong>Index {modalKey}</strong></th>
-                                    <th>Type {typeof modalValue}</th>
-                                </tr>
-                            </thead>
-                            <tbody> */}
 
-                        <div className="d-flex">
-                            <strong>Sub Collection Name : </strong> <p>{modalKey}</p>
-                        </div>
-
-                        {Array.isArray(modalValue) && (
-                            <div className="d-flex">
-                                <strong>Sub Collection Type : </strong> <p>Array</p>
-                            </div>
-                        )
-                        }
-
-                        {!Array.isArray(modalValue) && (
-                            <div className="d-flex">
-                                <strong>Sub Collection Type : </strong> <p> Object</p>
-                            </div>
-
-                        )
-
-                        }
-                        <Table bordered>
-
-                            {/* {typeof modalValue !== 'object' && !Array.isArray(modalValue) && ( */}
-                            <thead>
-                                <tr>
-                                    <th>Index</th>
-                                    <th>Field</th>
-                                    <th>Value</th>
-                                    <th>Type</th>
-                                    {/* <th>Actions</th> */}
-                                </tr>
-                            </thead>
-
-                            {/* )}
-                            {typeof modalValue === 'object' && !Array.isArray(modalValue) && (
-                                <thead>
-                                    <tr>
-                                        <th>New Index</th>
-                                        <th>Field</th>
-                                        <th>Value</th>
-                                        <th>Type</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-
-                            )} */}
-
-
-
-                            <tbody>
-
-                                {Object.entries(modalValue!).map(([field, value]) => {
-                                    return (
-                                        <>
-                                            <tr key={field}>
-                                                {typeof value === 'string' && (
-                                                    <>
-                                                        <td></td>
-                                                        <td> <Form.Label>{field}</Form.Label></td>
-                                                        <td>
-                                                            <Form.Group>
-
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={value}
-                                                                // onChange={(e) => setNewFieldName(e.target.value)}
-                                                                />
-
-
-                                                            </Form.Group>
-
-                                                        </td>
-                                                        <td>{typeof value}</td>
-                                                        {/* <td>
-                                                            <button className="btn btn-danger">Delete</button>
-                                                        </td> */}
-                                                    </>
-                                                )}
-
-                                                {typeof value === 'boolean' && (
-                                                    <>
-                                                        <td></td>
-                                                        <td>
-                                                            <Form.Label>{field}</Form.Label>
-                                                        </td>
-                                                        <Form.Group>
-
-
-                                                            <td>
-
-                                                                <Form.Check
-
-                                                                    // type="text"
-                                                                    checked={value}
-                                                                // onChange={(e) => setNewFieldName(e.target.value)}
-                                                                />
-
-                                                            </td>
-
-
-                                                        </Form.Group>
-                                                        <td>
-                                                            {typeof value}
-                                                        </td>
-                                                        {/* <td>
-                                                            <button className="btn btn-danger">Delete</button>
-                                                        </td> */}
-                                                    </>
-
-                                                )}
-
-                                                {typeof value === 'number' && (
-                                                    <>
-                                                        <td></td>
-                                                        <td><Form.Label>{field}</Form.Label></td>
-                                                        <td>
-                                                            <Form.Group>
-
-
-                                                                <Form.Control
-                                                                    type="number"
-                                                                    value={value}
-                                                                // onChange={(e) => setNewFieldName(e.target.value)}
-                                                                />
-
-
-
-                                                            </Form.Group>
-                                                        </td>
-                                                        {/* <td>
-                                                            <button className="btn btn-danger">Delete</button>
-                                                        </td> */}
-
-                                                    </>
-                                                )
-                                                }
-
-                                                {typeof value === 'object' && (
-                                                    <thead>
-                                                        {/* <th>Index</th>
-                                                        <th>Field Name</th>
-                                                        <th>Field Value</th>
-                                                        <th>Field Type</th>
-                                                        <th>Actions</th> */}
-                                                    </thead>
-                                                )
-                                                }
-
-                                                {typeof value === 'object' && (
-
-                                                    Object.entries(value!).map(([field1, value1]) => {
-
-                                                        return (
-                                                            <Table bordered>
-                                                                <tr>
-                                                                    <td>{field}</td>
-
-
-                                                                    {typeof value1 === 'string' && (
-                                                                        <>
-
-                                                                            <td><Form.Label>{field1}</Form.Label></td>
-                                                                            <td>
-                                                                                {/* <Form.Group> */}
-
-
-                                                                                <Form.Control
-                                                                                    className=""
-                                                                                    type="text"
-                                                                                    value={value1}
-                                                                                // onChange={(e) => setNewFieldName(e.target.value)}
-                                                                                />
-
-
-
-                                                                                {/* </Form.Group> */}
-                                                                            </td>
-                                                                            <td>{typeof value1}</td>
-                                                                            {/* <td>
-                                                                                <button className="btn btn-danger">Delete</button>
-                                                                            </td> */}
-
-                                                                        </>
-
-                                                                        // <p>{field1} String {String(value1)}</p>
-                                                                    )}
-                                                                    {typeof value1 === 'boolean' && (
-                                                                        <>
-                                                                            <td> <Form.Label>{field1}</Form.Label></td>
-                                                                            <td>
-                                                                                <Form.Group>
-                                                                                    <Form.Check
-                                                                                        className=""
-                                                                                        // type="text"
-                                                                                        checked={value1}
-                                                                                    // onChange={(e) => setNewFieldName(e.target.value)}
-                                                                                    />
-                                                                                </Form.Group>
-                                                                            </td>
-                                                                            <td>{typeof value1}</td>
-                                                                            {/* <td>
-                                                                                <button className="btn btn-danger">Delete</button>
-                                                                            </td> */}
-
-                                                                        </>
-                                                                    )}
-
-                                                                    {typeof value1 === 'number' && (
-                                                                        <>
-                                                                            <td>
-                                                                                <Form.Label>{field1}</Form.Label>
-                                                                            </td>
-                                                                            <Form.Group>
-                                                                                <td>
-
-                                                                                    <Form.Control
-                                                                                        className=""
-                                                                                        type="number"
-                                                                                        value={value1}
-                                                                                    // onChange={(e) => setNewFieldName(e.target.value)}
-                                                                                    />
-
-                                                                                </td>
-
-                                                                            </Form.Group>
-                                                                            <td>{typeof value1}</td>
-                                                                            {/* <td>
-                                                                                <button className="btn btn-danger">Delete</button>
-                                                                            </td> */}
-
-                                                                        </>
-                                                                    )
-                                                                    }
-
-                                                                </tr>
-                                                            </Table>
-                                                        )
-
-                                                    }
-
-                                                    ) // end Objects.entries
-
-                                                )
-
-                                                }
-
-                                            </tr>
-                                        </>
-                                    )
-                                })}
-                            </tbody>
-
-                        </Table>
-
-
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => {
-
-                        }}>
-                            Add
-                        </Button>
-                        <Button variant="secondary" onClick={closeModal}>
-                            Close
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            )
-            }
         </div >
 
 
