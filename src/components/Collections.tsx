@@ -67,7 +67,7 @@ export default function Collections() {
             <h2 className="mb-4">Collections</h2>
 
             {/* Create New Collection */}
-            <div className="card mb-4 shadow-sm">
+            <div className="card m-lg-5 shadow-lg">
                 <div className="card-body">
                     <h5 className="card-title">Create New Collection</h5>
                     <div className="row">
@@ -93,7 +93,7 @@ export default function Collections() {
             </div>
 
             {/* List of Collections */}
-            <ul className="list-group">
+            <ul className="list-group m-lg-5">
                 {collections.map((name) => (
                     <li
                         key={name}

@@ -11,6 +11,7 @@ export function Dashboard() {
             <div className="card">
                 <div className="card-header">
                     <h2>User DashBoard</h2>
+
                 </div>
                 <div className="card-body">
 
@@ -20,6 +21,9 @@ export function Dashboard() {
                                 <div className="card-title">File Storage</div>
                             </div>
                             <div className="card-body">
+                                <div className="card-img-top">
+                                    <img className="img-thumbnail img-size" src='storage_icon.png' />
+                                </div>
                                 <div className="card-text">
                                     <p>The current users file storage, where they can upload pictures, text files, etc.</p>
 
@@ -36,6 +40,9 @@ export function Dashboard() {
                                 <div className="card-title">Database Collections</div>
                             </div>
                             <div className="card-body">
+                                <div className="card-img-top">
+                                    <img className="img-thumbnail" src='db_icon.png' />
+                                </div>
                                 <div className="card-text">
                                     <p>The current users database. Used to store information for applications</p>
 

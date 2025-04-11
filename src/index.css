@@ -24,3 +24,10 @@ code {
 .user-header {
   color: #61dafb;
 }
+
+.pad-under-navbar {
+  top: 55px !important;
+  /* Push it below navbar */
+  z-index: 1020;
+  /* stay above content */
+}

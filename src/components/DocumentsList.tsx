@@ -37,10 +37,11 @@ export const DocumentsList = () => {
     return (
         <>
             <div className="container mt-4">
-                <div className="card">
+                <h2>Documents</h2>
+                <div className="card mt-lg-5 mb-lg-3 mx-lg-5 shadow-lg">
                     <div className="card-header">
                         <div className="d-flex justify-content-between">
-                            Collection : {collectionName}
+                            <h5>Collection : {collectionName}</h5>
                             <Button className="btn btn-primary btn-sm" onClick={() => {
                                 window.history.back();
                             }}>Back</Button>
@@ -50,26 +51,38 @@ export const DocumentsList = () => {
                 </div>
                 <br />
 
-                <div className="card">
-                    <div className="card-header">Documents</div>
+                {/* <div className="card"> */}
+                {/* <div className="card-header"> */}
+
+                {/* </div> */}
+                <ul className="list-group px-5">
                     {Object.entries(documents).map(([docId, doc], index) => (
                         <>
-                            <div className="card">
-                                <div className="card-body d-flex justify-content-between">
-                                    <div className="card-title ">{docId}</div>
-                                    {/* <div className="card-footer"> */}
-                                    <Button className="btn btn-primary" onClick={() => {
-                                        // setDocumentPath(`${docId}`);
-                                        navigate(`/${collectionName}/document/${docId}`)
-                                    }}>
-                                        View</Button>
-                                    {/* </div> */}
-                                </div>
-                            </div>
-                            <br />
+
+                            <li
+                                key={docId}
+                                className="list-group-item d-flex justify-content-between align-items-center shadow-sm"
+                            >
+                                <span
+                                    className="clickable"
+                                    onClick={() => navigate(`/${collectionName}/document/${docId}`)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    {docId}
+                                </span>
+                                <button
+                                    className="btn btn-danger btn-sm"
+                                // onClick={() => handleDeleteCollection(name)}
+                                >
+                                    ✕
+                                </button>
+                            </li>
+
+                            {/* <br /> */}
                         </>
                     ))}
-                </div>
+                </ul>
+                {/* </div> */}
             </div>
         </>
     )

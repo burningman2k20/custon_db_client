@@ -195,9 +195,9 @@ export const DocumentView = () => {
 
                         <td>
                             <Button className="btn btn-danger btn-sm" onClick={() => { handleFieldDelete(field) }}>Delete</Button>
-                            <Button className="btn btn-primary btn-sm" onClick={() => {
+                            {/* <Button className="btn btn-primary btn-sm" onClick={() => {
                                 alert(documentPath + `.${field}`)
-                            }}>view</Button>
+                            }}>view</Button> */}
                         </td>
                     </>
                 )}
@@ -221,9 +221,9 @@ export const DocumentView = () => {
 
                         <td>
                             <Button className="btn btn-danger btn-sm">Delete</Button>
-                            <Button className="btn btn-primary btn-sm" onClick={() => {
+                            {/* <Button className="btn btn-primary btn-sm" onClick={() => {
                                 alert(documentPath + `.${field}`)
-                            }}>view</Button>
+                            }}>view</Button> */}
                         </td>
                     </>
                 )}
@@ -247,9 +247,9 @@ export const DocumentView = () => {
 
                         <td>
                             <Button className="btn btn-danger btn-sm">Delete</Button>
-                            <Button className="btn btn-primary btn-sm" onClick={() => {
+                            {/* <Button className="btn btn-primary btn-sm" onClick={() => {
                                 alert(documentPath + `.${field}`)
-                            }}>view</Button>
+                            }}>view</Button> */}
                         </td>
 
                     </>
@@ -267,26 +267,42 @@ export const DocumentView = () => {
             </>
         )
     }
+
+    const returnObjectCount = () => {
+        var count = 0;
+        Object.entries(docs).map(([field, doc], index) => {
+            if (typeof (doc) === 'object') count++;
+        }
+        )
+        return count;
+    }
+
     // alert(documentName)
     return (
-        <>
-            <div className="card">
-                <div className="card-header">
-                    <div className="d-flex justify-content-between">
-                        Document Details
-                        <Button className="btn btn-success btn-sm" onClick={async () => {
-                            await updateDocument(collectionName!, documentName, documents[documentName])
-                            setFetch(true);
-                            toast("document updated", "ok")
-                        }}>Save</Button>
+        <div className="container mt-4">
+            <div className="card shadow-lg">
+                <div className="card-header d-flex justify-content-between">
+                    <h5>Document Details</h5>
+                    <Button className="btn btn-primary btn-sm" onClick={() => {
+                        if (documentPath !== documentName) {
+                            setDocumentPath(removeLastSegment(documentPath, '.'));
+                            setFetch(true)
+                        } else {
+                            window.history.back();
+                        }
 
-                    </div>
+                    }}>Back</Button>
+
 
                 </div>
-                <div className="card-body">
-                    <div><strong>Collection:</strong>{collectionName}</div>
-                    <div><strong>Name:</strong>{documentName}</div>
-                    <div><strong>Path:</strong>{documentPath.replace('.', '/')}</div>
+                <div className="card-body mb-1">
+                    <div className="d-flex justify-content-between">
+                        <h5>Collection:</h5>{collectionName}
+                    </div>
+                    <div className="d-flex justify-content-between">
+                        <h5>Document Name:</h5>{documentName}
+                    </div>
+
                     {/* <div className="card-footer">
                         
                     </div> */}
@@ -311,26 +327,103 @@ export const DocumentView = () => {
             <div className="card">
                 <div className="card-title">
                     <div className="d-flex justify-content-between">
-                        <div>{typeof getValueFromPath(documents, documentPath) === 'object' && !Array.isArray(getValueFromPath(documents, documentPath)) && (
-                            <div>Object</div>
+                        {/* <h5 className="m-4">Document Data</h5> */}
+                        <div className="m-3 fw-bold">Object Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div>
+                        {/* <div>{typeof getValueFromPath(documents, documentPath) === 'object' && !Array.isArray(getValueFromPath(documents, documentPath)) && (
+                            <div className="m-3">
+                                <div><strong>Type: </strong>Object</div>
+                                <div><strong>Object Path: </strong>{documentPath.replace('.', '/')}</div>
+                            </div>
                         )}</div>
                         <div>{typeof getValueFromPath(documents, documentPath) === 'object' && Array.isArray(getValueFromPath(documents, documentPath)) && (
-                            <div>Array Object</div>
-                        )}</div>
-                        <Button className="btn btn-primary btn-sm" onClick={() => {
-                            if (documentPath !== documentName) {
-                                setDocumentPath(removeLastSegment(documentPath, '.'));
-                                setFetch(true)
-                            } else {
-                                window.history.back();
-                            }
+                            <>
+                                <div><strong>Type: </strong>Array</div>
+                                <div><strong>Array Path:</strong>{documentPath.replace('.', '/')}</div>
+                            </>
+                        )}</div> */}
+                        <div className="m-4 d-flex justify-content-end">
 
-                        }}>Back</Button>
+                            <Button className="btn btn-success btn-sm" onClick={async () => {
+                                await updateDocument(collectionName!, documentName, documents[documentName])
+                                setFetch(true);
+                                toast("document updated", "ok")
+                            }}>Save</Button>
+
+                        </div>
+
                     </div>
 
                 </div>
+
+                {returnObjectCount() > 0 && (
+                    <Table bordered striped hover >
+                        <thead className="sticky-top pad-under-navbar m-4">
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {(docs !== null && docs !== undefined) && Object.entries(docs).map(([field, doc], index) => (
+                                <>
+                                    {typeof doc === 'object' && (
+                                        <>
+                                            <tr>
+                                                <td>{field} </td>
+                                                {Array.isArray(doc) ? (
+                                                    <td>Array</td>
+                                                ) : (
+                                                    <td>Object</td>
+                                                )}
+
+
+
+                                                <td>
+                                                    <Button className="btn btn-danger btn-sm">Delete</Button>
+                                                    <Button key={field} className="btn btn-primary btn-sm" onClick={async () => {
+
+                                                        // Split path and remove any empty segments
+                                                        const currentSegments = collectionPath.split("/").filter(Boolean);
+
+                                                        // Prevent duplicate if docName already in path
+                                                        if (currentSegments[currentSegments.length - 1] === field) return;
+
+                                                        const newPath = [...currentSegments, field].join(".");
+
+                                                        if (typeof doc === 'object' && !Array.isArray(doc)) {
+                                                            setDocumentPath(documentPath + '.' + newPath);
+                                                            setFetch(true);
+                                                            setDocs(getValueFromPath(documents, documentPath))
+                                                            setData('')
+                                                        }
+                                                        else if (typeof doc === 'object' && Array.isArray(doc)) {
+                                                            setDocumentPath(documentPath + '.' + newPath);
+                                                            setFetch(true);
+                                                            setDocs(getValueFromPath(documents, documentPath))
+                                                            setData('')
+                                                        }
+
+                                                    }}>
+                                                        View
+                                                    </Button>
+                                                </td>
+
+                                            </tr>
+                                        </>
+                                    )}
+
+                                </>
+                            ))}
+
+                        </tbody>
+                    </Table>
+                )}
+
                 <Table bordered striped hover >
-                    <thead className="sticky-top mt-4">
+                    <thead className="sticky-top pad-under-navbar mt-4">
                         <tr>
                             <th>Field/Index</th>
                             <th>Type</th>
@@ -342,78 +435,28 @@ export const DocumentView = () => {
 
                         {(docs !== null && docs !== undefined) && Object.entries(docs).map(([field, doc], index) => (
                             <>
-                                <tr>
-                                    {/* {typeof doc === 'object' && (
+                                {typeof doc !== 'object' && (
+                                    <tr>
+                                        {/* {typeof doc === 'object' && (
                         <div>{doc[documentName]}</div>
                     )
                     } */}
-                                    {/* {typeof doc !== 'object' && (
+                                        {/* {typeof doc !== 'object' && (
                         setData(getValueFromPath(documents, documentPath + `.${field}`))
                     )} */}
 
-                                    {typeof doc !== 'object' ? (
-                                        <>
+                                        {typeof doc !== 'object' && (
+                                            <>
 
-                                            {renderField(field, doc)}
+                                                {renderField(field, doc)}
 
-                                        </>
-                                    ) : (
-                                        <>
-                                            <td>{field} </td>
-                                            <td>{typeof doc}</td>
-                                            <td>
+                                            </>
+                                        )
+                                        }
 
-                                            </td>
+                                    </tr>
+                                )}
 
-                                            <td>
-                                                <Button key={field} className="btn btn-primary btn-sm" onClick={async () => {
-                                                    // if (getValueFromPath(documents, documentPath + '.' + field))
-                                                    // Split path and remove any empty segments
-                                                    const currentSegments = collectionPath.split("/").filter(Boolean);
-
-                                                    // Prevent duplicate if docName already in path
-                                                    if (currentSegments[currentSegments.length - 1] === field) return;
-
-                                                    const newPath = [...currentSegments, field].join(".");
-
-                                                    // setDocumentPath(documentPath + `.${field}`);
-                                                    // alert(documentPath);
-                                                    // alert(getValueFromPath(documents, documentPath))
-
-                                                    if (typeof doc === 'object' && !Array.isArray(doc)) {
-                                                        setDocumentPath(documentPath + '.' + newPath);
-                                                        setFetch(true);
-                                                        setDocs(getValueFromPath(documents, documentPath))
-                                                        setData('')
-                                                    }
-                                                    else if (typeof doc === 'object' && Array.isArray(doc)) {
-                                                        // alert('is an array object')
-                                                        setDocumentPath(documentPath + '.' + newPath);
-                                                        setFetch(true);
-                                                        setDocs(getValueFromPath(documents, documentPath))
-                                                        setData('')
-                                                    }
-                                                    // else {
-                                                    //     // setData(getValueFromPath(documents, documentPath + `.${field}`));
-                                                    //     return (
-                                                    //         <Form.Group>
-                                                    //             <Form.Label>{data}</Form.Label>
-
-                                                    //         </Form.Group>
-                                                    //     )
-                                                    //     // alert(data);
-                                                    // }
-                                                    // navigate(`/${collectionName}/document/${docId}`)
-                                                }}>
-                                                    View
-                                                </Button>
-                                            </td>
-
-                                        </>
-                                    )}
-
-
-                                </tr>
                             </>
                         ))
                         }
@@ -470,6 +513,6 @@ export const DocumentView = () => {
 
                 </div>
             </div >
-        </>
+        </div>
     )
 }

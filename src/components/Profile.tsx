@@ -23,6 +23,11 @@ export function Profile() {
                     <div className="d-flex col-sm-4">
                         <p>Display Name: {user?.displayName}</p><Button className="btn btn-primary">Change</Button>
                     </div>
+                    {user?.admin && (
+                        <>
+                            <div>Admin</div>
+                        </>
+                    )}
                 </div>
                 <div className="card-footer">
                     Profile Footer
