@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getDocuments, toast, DocumentType } from "../services/api";
-import { Button } from "react-bootstrap";
+import { getDocuments, toast, DocumentType, createDocument, deleteDocument } from "../services/api";
+import { Button, Form, Modal } from "react-bootstrap";
 
 type FieldType = "string" | "number" | "boolean" | "array" | "object";
 
@@ -13,14 +13,20 @@ export const DocumentsList = () => {
     const { collectionName } = useParams<{ collectionName: string }>();
     const [documents, setDocuments] = useState<Record<string, DocumentType>>({});
 
+    const [showAddDocument, setShowAddDocument] = useState(false);
+
+    const [newDocumentName, setNewDocumentName] = useState("");
+
+    const [fetchDocs, setFetchDocs] = useState(true)
     const navigate = useNavigate();
 
     //
     // React Hook to monitor documents list
     //
     useEffect(() => {
+        if (!fetchDocs) return;
         fetchDocuments();
-    }, [collectionName]);
+    }, [fetchDocs, collectionName]);
 
     const fetchDocuments = async () => {
         try {
@@ -28,9 +34,23 @@ export const DocumentsList = () => {
             // setDocuments(res.data);
             const data = await getDocuments(collectionName!);
             setDocuments(data);
+            setFetchDocs(false)
         } catch (error) {
             console.error("Error fetching documents", error);
             toast("Error fetching documents", "error");
+        }
+    };
+
+    const handleDeleteDocument = async (docId: string) => {
+        if (!window.confirm(`Are you sure you want to delete "${docId}"?`)) return;
+        try {
+            await deleteDocument(collectionName!, docId);
+            toast(`Document "${docId}" deleted successfully!`, "ok");
+            // alert(`Document "${docId}" deleted successfully!`);
+            setFetchDocs(true); // Refresh list
+        } catch (err) {
+            // setError(`Failed to delete document "${docId}"`);
+            console.error(err);
         }
     };
 
@@ -42,9 +62,16 @@ export const DocumentsList = () => {
                     <div className="card-header">
                         <div className="d-flex justify-content-between">
                             <h5>Collection : {collectionName}</h5>
-                            <Button className="btn btn-primary btn-sm" onClick={() => {
-                                window.history.back();
-                            }}>Back</Button>
+                            <div className="justify-content-end">
+                                <Button className="btn btn-success btn-sm" onClick={() => {
+                                    // window.history.back();
+                                    setShowAddDocument(true)
+                                }}>Add</Button>
+
+                                <Button className="btn btn-primary btn-sm" onClick={() => {
+                                    window.history.back();
+                                }}>Back</Button>
+                            </div>
                         </div>
                     </div>
                     <div className="card-body">List of User Documents are listed Below</div>
@@ -72,7 +99,7 @@ export const DocumentsList = () => {
                                 </span>
                                 <button
                                     className="btn btn-danger btn-sm"
-                                // onClick={() => handleDeleteCollection(name)}
+                                    onClick={() => handleDeleteDocument(docId)}
                                 >
                                     ✕
                                 </button>
@@ -84,6 +111,41 @@ export const DocumentsList = () => {
                 </ul>
                 {/* </div> */}
             </div>
+
+            {showAddDocument && (
+                <Modal show={showAddDocument} onHide={() => setShowAddDocument(false)}>
+                    <Modal.Header closeButton>
+
+                        <Modal.Title>Add Document</Modal.Title>
+                    </Modal.Header>
+
+                    <Modal.Body>
+                        <Form.Group>
+                            <Form.Label>Document Name:</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={newDocumentName}
+                                onChange={(e) => setNewDocumentName(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Modal.Body>
+
+                    <Modal.Footer>
+                        <Button className="btn btn-success btn-sm" onClick={() => {
+                            if (newDocumentName === "") {
+                                alert("Now name entered");
+                                setShowAddDocument(false);
+                                return
+                            }
+                            createDocument(collectionName!, newDocumentName, {})
+                            setNewDocumentName("")
+                            setFetchDocs(true)
+                            setShowAddDocument(false)
+                            toast("Document created successfully", "ok")
+                        }}>Add</Button>
+                    </Modal.Footer>
+                </Modal>
+            )}
         </>
     )
 }

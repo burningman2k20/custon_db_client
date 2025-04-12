@@ -18,11 +18,11 @@ export function Dashboard() {
                     <div className="container d-flex col-sm-10">
                         <div className="card">
                             <div className="card-header">
-                                <div className="card-title">File Storage</div>
+                                <div className="card-title"><img className="img-thumbnail img-size" src='storage_icon.png' />File Storage</div>
                             </div>
                             <div className="card-body">
                                 <div className="card-img-top">
-                                    <img className="img-thumbnail img-size" src='storage_icon.png' />
+
                                 </div>
                                 <div className="card-text">
                                     <p>The current users file storage, where they can upload pictures, text files, etc.</p>
@@ -37,11 +37,11 @@ export function Dashboard() {
 
                         <div className="card">
                             <div className="card-header">
-                                <div className="card-title">Database Collections</div>
+                                <div className="card-title"><img className="img-thumbnail img-size" src='db_icon.png' />Database Collections</div>
                             </div>
                             <div className="card-body">
                                 <div className="card-img-top">
-                                    <img className="img-thumbnail" src='db_icon.png' />
+
                                 </div>
                                 <div className="card-text">
                                     <p>The current users database. Used to store information for applications</p>

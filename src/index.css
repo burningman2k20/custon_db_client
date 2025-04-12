@@ -31,3 +31,8 @@ code {
   z-index: 1020;
   /* stay above content */
 }
+
+.img-size {
+  width: 25% !important;
+  height: 25% !important;
+}
