@@ -128,7 +128,7 @@ export const DocumentView = () => {
             // setDocuments(res.data);
             setLoading(true);
             const data = await getDocuments(collectionName!);
-            setDocuments(data);
+            setDocuments(removeNullObjects(data));
             setDocs(getValueFromPath(data, documentPath.replace('/', '.')));
             setFetch(false);
             setLoading(false);
@@ -151,6 +151,11 @@ export const DocumentView = () => {
         return parts.join(separator);
     };
 
+    const getLastSegment = (str: string, separator: string = "/") => {
+        const parts = str.split(separator);
+        return parts[parts.length - 1];
+    };
+
     const handleFieldChange = (field: string, value: any) => {
         // alert(documentPath + `.${field}`)
         // alert(value)
@@ -169,7 +174,9 @@ export const DocumentView = () => {
 
         // alert(getValueFromPath(docs, `${field}`))
         deleteValueAtPath(false, docs, `${field}`)
+        // setDocs(removeNullObjects(docs));
         deleteValueAtPath(true, documents, documentPath + `.${field}`)
+        // setDocuments(removeNullObjects(documents));
     }
 
     const renderField = (field: string, value: any) => {
@@ -325,44 +332,47 @@ export const DocumentView = () => {
 
             <br />
 
-
-
-            {/* <div className="card">
-            {(docs !== null && docs !== undefined) && Object.entries(docs).map(([field, doc], index) => (
-                <>
-                    {typeof doc === 'object' && (
-                        
-                )}
-                    </>
-            ))}
-            </div> */}
             <div className="card">
                 <div className="card-title">
                     <div className="d-flex justify-content-between">
-                        {/* <h5 className="m-4">Document Data</h5> */}
-                        <div className="m-3 fw-bold">Object Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div>
+                        {!Array.isArray(getValueFromPath(documents, documentPath)) ? (
+                            <div className="m-3 fw-bold">Object Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div>
+                        ) : (
+                            <div className="m-3 fw-bold">Array Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div>
+                        )}
+
+                        {/* <div className="m-3 fw-bold">Object Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div> */}
                         {/* <div>{typeof getValueFromPath(documents, documentPath) === 'object' && !Array.isArray(getValueFromPath(documents, documentPath)) && (
                             <div className="m-3">
                                 <div><strong>Type: </strong>Object</div>
-                                <div><strong>Object Path: </strong>{documentPath.replace('.', '/')}</div>
-                            </div>
+                        <div>
+                            <div className="m-3 fw-bold">Object Path: </div>
+                            <div className="fw-normal">{documentPath.replace('.', '/')}</div>
+                        </div>
+                    </div>
                         )}</div>
-                        <div>{typeof getValueFromPath(documents, documentPath) === 'object' && Array.isArray(getValueFromPath(documents, documentPath)) && (
-                            <>
-                                <div><strong>Type: </strong>Array</div>
-                                <div><strong>Array Path:</strong>{documentPath.replace('.', '/')}</div>
-                            </>
-                        )}</div> */}
+                <div>{typeof getValueFromPath(documents, documentPath) === 'object' && Array.isArray(getValueFromPath(documents, documentPath)) && (
+                    <div className="m-3">
+                        <div><div className="m-3 fw-bold">Type: </div>Array</div>
+                        <div>
+                            <div className="m-3 fw-bold">Array Path:</div>
+                            <div className="fw-normal">{documentPath.replace('.', '/')}</div>
+                        </div>
+                    </div>
+                )}</div> */}
                         <div className="m-4 d-flex justify-content-end">
                             <Button className="btn btn-success btn-sm" onClick={() => {
                                 // window.history.back();
                                 setShowAddObject(true)
                             }}>Add Object</Button>
                             <Button className="btn btn-success btn-sm" onClick={async () => {
+                                // setDocs(removeNullObjects(docs));
+                                // setDocuments(removeNullObjects(documents));
                                 await updateDocument(collectionName!, documentName, documents[documentName])
+                                // await updateDocument(collectionName!, documentName, documents[documentName])
                                 setFetch(true);
-                                toast("document updated", "ok")
-                            }}>Save</Button>
+                                toast("Document Updated", "ok")
+                            }}>Save Document</Button>
 
                         </div>
 
@@ -370,72 +380,77 @@ export const DocumentView = () => {
 
                 </div>
 
-                {returnObjectCount() > 0 && (
-                    <Table bordered striped hover >
-                        <thead className="sticky-top pad-under-navbar m-4">
-                            <tr>
-                                <th>Name</th>
-                                <th>Type</th>
+                {
+                    returnObjectCount() > 0 && (
+                        <Table bordered striped hover >
+                            <thead className="sticky-top pad-under-navbar m-4">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
 
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
 
-                            {(docs !== null && docs !== undefined) && Object.entries(docs).map(([field, doc], index) => (
-                                <>
-                                    {typeof doc === 'object' && (
-                                        <>
-                                            <tr>
-                                                <td>{field} </td>
-                                                {Array.isArray(doc) ? (
-                                                    <td>Array</td>
-                                                ) : (
-                                                    <td>Object</td>
-                                                )}
+                                {(docs !== null && docs !== undefined) && Object.entries(docs).map(([field, doc], index) => (
+                                    <>
+                                        {typeof doc === 'object' && (doc !== null && doc !== undefined) && (
+                                            <>
+                                                <tr>
+                                                    <td>{field} </td>
+                                                    {Array.isArray(doc) ? (
+                                                        <td>Array</td>
+                                                    ) : (
+                                                        <td>Object</td>
+                                                    )}
 
 
 
-                                                <td>
-                                                    <Button className="btn btn-danger btn-sm">Delete</Button>
-                                                    <Button key={field} className="btn btn-primary btn-sm" onClick={async () => {
+                                                    <td>
+                                                        <Button className="btn btn-danger btn-sm" onClick={() => {
+                                                            // alert(field)
+                                                            handleFieldDelete(field)
+                                                        }}>Delete</Button>
+                                                        <Button key={field} className="btn btn-primary btn-sm" onClick={async () => {
+                                                            collectionPath.replace('.', '/')
+                                                            // Split path and remove any empty segments
+                                                            const currentSegments = collectionPath.split("/").filter(Boolean);
 
-                                                        // Split path and remove any empty segments
-                                                        const currentSegments = collectionPath.split("/").filter(Boolean);
+                                                            // Prevent duplicate if docName already in path
+                                                            if (currentSegments[currentSegments.length - 1] === field) return;
 
-                                                        // Prevent duplicate if docName already in path
-                                                        if (currentSegments[currentSegments.length - 1] === field) return;
+                                                            const newPath = [...currentSegments, field].join(".");
 
-                                                        const newPath = [...currentSegments, field].join(".");
+                                                            if (typeof doc === 'object' && !Array.isArray(doc)) {
+                                                                setDocumentPath(documentPath + '.' + newPath);
+                                                                setFetch(true);
+                                                                setDocs(getValueFromPath(documents, documentPath))
+                                                                setData('')
+                                                            }
+                                                            else if (typeof doc === 'object' && Array.isArray(doc)) {
+                                                                setDocumentPath(documentPath + '.' + newPath);
+                                                                setFetch(true);
+                                                                setDocs(getValueFromPath(documents, documentPath))
+                                                                setData('')
+                                                            }
 
-                                                        if (typeof doc === 'object' && !Array.isArray(doc)) {
-                                                            setDocumentPath(documentPath + '.' + newPath);
-                                                            setFetch(true);
-                                                            setDocs(getValueFromPath(documents, documentPath))
-                                                            setData('')
-                                                        }
-                                                        else if (typeof doc === 'object' && Array.isArray(doc)) {
-                                                            setDocumentPath(documentPath + '.' + newPath);
-                                                            setFetch(true);
-                                                            setDocs(getValueFromPath(documents, documentPath))
-                                                            setData('')
-                                                        }
+                                                        }}>
+                                                            View
+                                                        </Button>
+                                                    </td>
 
-                                                    }}>
-                                                        View
-                                                    </Button>
-                                                </td>
+                                                </tr>
+                                            </>
+                                        )}
 
-                                            </tr>
-                                        </>
-                                    )}
+                                    </>
+                                ))}
 
-                                </>
-                            ))}
-
-                        </tbody>
-                    </Table>
-                )}
+                            </tbody>
+                        </Table>
+                    )
+                }
                 <div className="d-flex justify-content-end mx-sm-4">
                     {/* <div>Fields</div> */}
                     <Button className="btn btn-success btn-sm" onClick={() => {
@@ -459,16 +474,8 @@ export const DocumentView = () => {
 
                         {(docs !== null && docs !== undefined) && Object.entries(docs).map(([field, doc], index) => (
                             <>
-                                {typeof doc !== 'object' && (
+                                {typeof doc !== 'object' && doc !== null && (
                                     <tr>
-                                        {/* {typeof doc === 'object' && (
-                        <div>{doc[documentName]}</div>
-                    )
-                    } */}
-                                        {/* {typeof doc !== 'object' && (
-                        setData(getValueFromPath(documents, documentPath + `.${field}`))
-                    )} */}
-
                                         {typeof doc !== 'object' && (
                                             <>
 
@@ -488,261 +495,267 @@ export const DocumentView = () => {
                     </tbody>
                 </Table>
 
-                {showAddField && (
-                    <Modal show={showAddField} onHide={() => setShowAddField(false)}>
-                        <Modal.Header closeButton>
+                {
+                    showAddField && (
+                        <Modal show={showAddField} onHide={() => setShowAddField(false)}>
+                            <Modal.Header closeButton>
 
-                            <Modal.Title>Add New Field Object</Modal.Title>
-                        </Modal.Header>
+                                <Modal.Title>Add New Field</Modal.Title>
+                            </Modal.Header>
 
-                        <Modal.Body>
-                            <Form.Group>
-                                <FloatingLabel
-                                    controlId="floatingInput1"
-                                    label="Field Name"
-                                    className="mb-3"
-                                >
-                                    <Form.Control
-                                        type="text"
-                                        value={newFieldName}
-                                        onChange={(e) => {
-                                            setNewFieldName(e.currentTarget.value);
-                                        }}
-                                    />
-                                </FloatingLabel>
-                            </Form.Group>
-
-                            <Form.Group>
-
-                                {newFieldType === 'string' && (
-                                    <FloatingLabel
-                                        controlId="floatingInput1"
-                                        label="Field Value"
-                                        className="mb-4"
-                                    >
-                                        <Form.Control
-                                            type="text"
-                                            value={newFieldValue as string}
-                                            onChange={(e) => {
-                                                setNewFieldValue(e.currentTarget.value)
-                                            }}
-                                        />
-                                    </FloatingLabel>
-                                )}
-                                {newFieldType === 'number' && (
-                                    <FloatingLabel
-                                        controlId="floatingInput1"
-                                        label="Field Value"
-                                        className="mb-4"
-                                    >
-                                        <Form.Control
-                                            type="number"
-                                            value={newFieldValue as number}
-                                            onChange={(e) => {
-                                                setNewFieldValue(e.target.value)
-                                            }}
-                                        />
-                                    </FloatingLabel>
-                                )}
-                                {newFieldType === 'boolean' && (
-                                    <div className="mb-3">
-                                        <Form.Label>Field Value: </Form.Label>
-                                        <Form.Check
-                                            type="switch"
-                                            checked={newFieldValue as boolean}
-                                            onChange={(e) => {
-                                                setNewFieldValue(e.currentTarget.checked)
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-
-
-                            </Form.Group>
-                            <Form.Group>
-                                <FloatingLabel
-                                    controlId="floatingInput1"
-                                    label="Field Type"
-                                    className="mb-3"
-                                >
-                                    <Form.Select
-                                        aria-label="Default select example"
-                                        value={newFieldType}
-                                        onChange={(e) => {
-                                            setNewFieldType(e.currentTarget.value)
-                                            // alert(e.currentTarget.value)
-                                        }}
-                                    >
-                                        <option value="string">String</option>
-                                        <option value="number">Number</option>
-                                        <option value="boolean">Boolean</option>
-                                    </Form.Select>
-                                </FloatingLabel>
-
-                            </Form.Group>
-                        </Modal.Body>
-
-                        <Modal.Footer>
-                            <Button className="btn btn-success btn-sm" onClick={() => {
-                                // createDocument(collectionName!, newDocumentName, {})
-                                // setNewDocumentName("")
-                                // setFetchDocs(true)
-                                // alert(documentPath + `.${newFieldName}`)
-                                // alert(getValueFromPath(docs, `.${newFieldName}`))
-                                if (getValueFromPath(documents, documentPath + `.${newFieldName}`) === undefined) {
-                                    switch (newFieldType) {
-                                        case 'string':
-                                            handleFieldChange(newFieldName, newFieldValue);
-                                            break;
-                                        case 'number':
-                                            handleFieldChange(newFieldName, Number(newFieldValue));
-                                            break;
-                                        case 'boolean':
-                                            handleFieldChange(newFieldName, Boolean(newFieldValue));
-                                            break;
-                                    }
-
-                                    // handleFieldChange(newFieldName, newFieldValue);
-                                    setShowAddField(false)
-                                    toast("Field created successfully", "ok")
-                                } else {
-                                    toast("Field already exists", "error")
-                                }
-
-                            }}>Add</Button>
-                        </Modal.Footer>
-                    </Modal>
-                )}
-
-                {showAddObject && (
-                    <Modal show={showAddObject} onHide={() => setShowAddObject(false)}>
-                        <Modal.Header closeButton>
-
-                            <Modal.Title>Add New Object</Modal.Title>
-                        </Modal.Header>
-
-                        <Modal.Body>
-                            <Form.Group>
-                                <FloatingLabel
-                                    controlId="floatingInput1"
-                                    label="Object Name"
-                                    className="mb-3"
-                                >
-                                    <Form.Control
-                                        type="text"
-                                        value={newObjectName}
-                                        onChange={(e) => {
-                                            setNewObjectName(e.currentTarget.value);
-                                        }}
-                                    />
-                                </FloatingLabel>
-                            </Form.Group>
-
-                            <Form.Group>
-                                <FloatingLabel
-                                    controlId="floatingInput1"
-                                    label="Field Type"
-                                    className="mb-3"
-                                >
-                                    <Form.Select
-                                        aria-label="Default select example"
-                                        value={newObjectType}
-                                        onChange={(e) => {
-                                            setNewObjectType(e.currentTarget.value)
-                                            // alert(e.currentTarget.value)
-                                        }}
-                                    >
-                                        <option value="string">Object</option>
-                                        <option value="number">Array</option>
-                                    </Form.Select>
-                                </FloatingLabel>
-
-                            </Form.Group>
-                        </Modal.Body>
-
-                        <Modal.Footer>
-                            <Button className="btn btn-success btn-sm" onClick={() => {
-                                return
-                                // createDocument(collectionName!, newDocumentName, {})
-                                // setNewDocumentName("")
-                                // setFetchDocs(true)
-                                // alert(documentPath + `.${newFieldName}`)
-                                // alert(getValueFromPath(docs, `.${newFieldName}`))
-                                if (getValueFromPath(documents, documentPath + `.${newFieldName}`) === undefined) {
-                                    switch (newFieldType) {
-                                        case 'string':
-                                            handleFieldChange(newFieldName, newFieldValue);
-                                            break;
-                                        case 'number':
-                                            handleFieldChange(newFieldName, Number(newFieldValue));
-                                            break;
-                                        case 'boolean':
-                                            handleFieldChange(newFieldName, Boolean(newFieldValue));
-                                            break;
-                                    }
-
-                                    // handleFieldChange(newFieldName, newFieldValue);
-                                    setShowAddField(false)
-                                    toast("Field created successfully", "ok")
-                                } else {
-                                    toast("Field already exists", "error")
-                                }
-
-                            }}>Add</Button>
-                        </Modal.Footer>
-                    </Modal>
-                )}
-                {/* <div className="card sticky-bottom">
-                    <div className="card-title">
-                        Add New Object
-                    </div>
-                    <div className="card-body">
-                        <Form>
-                            <Row>
-                                <Form.Group as={Col}>
-                                    <Col>
+                            <Modal.Body>
+                                {!Array.isArray(getValueFromPath(documents, documentPath)) && (
+                                    <Form.Group>
                                         <FloatingLabel
                                             controlId="floatingInput1"
                                             label="Field Name"
                                             className="mb-3"
                                         >
-                                            <Form.Control type="text" />
+                                            <Form.Control
+                                                type="text"
+                                                value={newFieldName}
+                                                onChange={(e) => {
+                                                    setNewFieldName(e.currentTarget.value);
+                                                }}
+                                            />
                                         </FloatingLabel>
-                                    </Col>
-                                </Form.Group>
-                                <Form.Group as={Col}>
+                                    </Form.Group>
+                                )}
 
+
+                                <Form.Group>
+
+                                    {newFieldType === 'string' && (
+                                        <FloatingLabel
+                                            controlId="floatingInput1"
+                                            label="Field Value"
+                                            className="mb-4"
+                                        >
+                                            <Form.Control
+                                                type="text"
+                                                value={newFieldValue as string}
+                                                onChange={(e) => {
+                                                    setNewFieldValue(e.currentTarget.value)
+                                                }}
+                                            />
+                                        </FloatingLabel>
+                                    )}
+                                    {newFieldType === 'number' && (
+                                        <FloatingLabel
+                                            controlId="floatingInput1"
+                                            label="Field Value"
+                                            className="mb-4"
+                                        >
+                                            <Form.Control
+                                                type="number"
+                                                value={newFieldValue as number}
+                                                onChange={(e) => {
+                                                    setNewFieldValue(e.target.value)
+                                                }}
+                                            />
+                                        </FloatingLabel>
+                                    )}
+                                    {newFieldType === 'boolean' && (
+                                        <div className="mb-3">
+                                            <Form.Label>Field Value: </Form.Label>
+                                            <Form.Check
+                                                type="switch"
+                                                checked={newFieldValue as boolean}
+                                                onChange={(e) => {
+                                                    setNewFieldValue(e.currentTarget.checked)
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
+
+
+                                </Form.Group>
+
+                                {!Array.isArray(getValueFromPath(documents, documentPath)) ? (
+                                    <Form.Group>
+                                        <FloatingLabel
+                                            controlId="floatingInput1"
+                                            label="Field Type"
+                                            className="mb-3"
+                                        >
+                                            <Form.Select
+                                                aria-label="Default select example"
+                                                value={newFieldType}
+                                                onChange={(e) => {
+                                                    setNewFieldType(e.currentTarget.value)
+                                                    // alert(e.currentTarget.value)
+                                                }}
+                                            >
+                                                <option value="string">String</option>
+                                                <option value="number">Number</option>
+                                                <option value="boolean">Boolean</option>
+                                                <option value="date">Date</option>
+                                            </Form.Select>
+                                        </FloatingLabel>
+
+                                    </Form.Group>
+                                ) : (
+                                    <Form.Group>
+                                        <FloatingLabel
+                                            controlId="floatingInput1"
+                                            label="Field Type"
+                                            className="mb-3"
+                                        >
+                                            <Form.Select
+                                                aria-label="Default select example"
+                                                value={newFieldType}
+                                                onChange={(e) => {
+                                                    if (!Array.isArray(getValueFromPath(documents, documentPath))) setNewFieldType(e.currentTarget.value)
+                                                    // alert(documentPath)
+                                                    if (Array.isArray(getValueFromPath(documents, documentPath))) {
+                                                        if (getValueFromPath(documents, documentPath).length == 0) setNewFieldType(e.currentTarget.value)
+                                                        // alert(e.currentTarget.value)
+                                                    }
+                                                }
+                                                }
+                                            >
+                                                <option value="string">String</option>
+                                                <option value="number">Number</option>
+                                                <option value="boolean">Boolean</option>
+                                                <option value="date">Date</option>
+                                            </Form.Select>
+                                        </FloatingLabel>
+
+                                    </Form.Group>
+
+                                )}
+                            </Modal.Body>
+
+                            <Modal.Footer>
+                                <Button className="btn btn-success btn-sm" onClick={() => {
+
+                                    if (Array.isArray(getValueFromPath(documents, documentPath))) {
+                                        const addItem = getValueFromPath(documents, documentPath);
+                                        if (addItem.length > 0) {
+                                            if (typeof addItem[0] === 'string') addItem.push(newFieldValue);
+                                            else if (typeof addItem[0] === 'number') addItem.push(Number(newFieldValue));
+                                            else if (typeof addItem[0] === 'boolean') addItem.push(Boolean(newFieldValue));
+                                            // else addItem.push(String(newFieldValue));
+                                        } else {
+                                            if (newFieldType === 'string') addItem.push(newFieldValue);
+                                            else if (newFieldType === 'number') addItem.push(Number(newFieldValue));
+                                            else if (newFieldType === 'boolean') addItem.push(Boolean(newFieldValue));
+                                            // else addItem.push(String(newFieldValue));
+                                        }
+
+
+                                        // handleFieldChange(getLastSegment(documentPath, '.'), addItem[addItem.length - 1])
+                                        handleFieldChange(String(addItem.length - 1), addItem[addItem.length - 1])
+                                        setNewFieldValue(null);
+
+                                        toast("Field created successfully", "ok")
+                                        setShowAddField(false)
+                                        return
+
+                                    }
+
+                                    if (getValueFromPath(documents, documentPath + `.${newFieldName}`) === undefined) {
+
+                                        switch (newFieldType) {
+                                            case 'string':
+                                                handleFieldChange(newFieldName, newFieldValue);
+                                                break;
+                                            case 'number':
+                                                handleFieldChange(newFieldName, Number(newFieldValue));
+                                                break;
+                                            case 'boolean':
+                                                handleFieldChange(newFieldName, Boolean(newFieldValue));
+                                                break;
+                                        }
+                                        setNewFieldValue(null)
+                                        setShowAddField(false)
+                                        toast("Field created successfully", "ok")
+                                    } else {
+                                        toast("Field already exists", "error")
+                                    }
+
+                                }}>Add</Button>
+                            </Modal.Footer>
+                        </Modal>
+                    )
+                }
+
+                {/* Popup to handle adding new Objects and Arrays */}
+                {
+                    showAddObject && (
+                        <Modal show={showAddObject} onHide={() => setShowAddObject(false)}>
+                            <Modal.Header closeButton>
+
+                                <Modal.Title>Add New Object</Modal.Title>
+                            </Modal.Header>
+
+                            <Modal.Body>
+                                <Form.Group>
                                     <FloatingLabel
-                                        controlId="floatingInput2"
-                                        label="Field Value"
+                                        controlId="floatingInput1"
+                                        label="Object Name"
                                         className="mb-3"
                                     >
-                                        <Form.Control type="text" />
+                                        <Form.Control
+                                            type="text"
+                                            value={newObjectName}
+                                            onChange={(e) => {
+                                                setNewObjectName(e.currentTarget.value);
+                                            }}
+                                        />
                                     </FloatingLabel>
                                 </Form.Group>
-                                <Form.Group as={Col}>
-                                    <Form.Select aria-label="Default select example">
-                                        <option>Open this select menu</option>
-                                        <option value="1">One</option>
-                                        <option value="2">Two</option>
-                                        <option value="3">Three</option>
-                                    </Form.Select>
 
+                                <Form.Group>
+                                    <FloatingLabel
+                                        controlId="floatingInput1"
+                                        label="Field Type"
+                                        className="mb-3"
+                                    >
+                                        <Form.Select
+                                            aria-label="Default select example"
+                                            value={newObjectType}
+                                            onChange={(e) => {
+                                                setNewObjectType(e.currentTarget.value)
+                                                // alert(e.currentTarget.value)
+                                            }}
+                                        >
+                                            <option value="object">Object</option>
+                                            <option value="array">Array</option>
+                                        </Form.Select>
+                                    </FloatingLabel>
 
                                 </Form.Group>
-                                <Col>
-                                    <Button onClick={() => {
-                                        alert(documentPath);
-                                    }}>Add</Button>
+                            </Modal.Body>
 
-                                </Col>
-                            </Row>
-                        </Form>
-                    </div>
+                            <Modal.Footer>
+                                <Button className="btn btn-success btn-sm" onClick={() => {
 
-                </div> */}
+                                    if (getValueFromPath(documents, documentPath + `.${newObjectName}`) === undefined) {
+                                        switch (newObjectType) {
+                                            case 'object':
+                                                handleFieldChange(newObjectName, {});
+                                                break;
+                                            case 'array':
+                                                handleFieldChange(newObjectName, []);
+                                                break;
+                                        }
+
+                                        // handleFieldChange(newFieldName, newFieldValue);
+                                        setShowAddObject(false)
+                                        toast("Object created successfully", "ok")
+                                    } else {
+                                        toast("Objectalready exists", "error")
+                                    }
+
+                                }}>Add</Button>
+                            </Modal.Footer>
+                        </Modal>
+                    )
+                }
+
             </div >
-        </div>
+        </div >
     )
 }
