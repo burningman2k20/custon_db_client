@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom"
 import { DocumentType, getDocuments, toast, updateDocument } from "../services/api"
-import { Button, Col, FloatingLabel, Form, Modal, Row, Table } from "react-bootstrap";
+import { Button, Col, FloatingLabel, Form, Modal, Row, Table, Toast } from "react-bootstrap";
 import { render } from "@testing-library/react";
 import { set } from "lodash";
 
@@ -20,7 +20,7 @@ export const DocumentView = () => {
     const [showAddObject, setShowAddObject] = useState(false);
 
     const [newFieldName, setNewFieldName] = useState("")
-    const [newFieldValue, setNewFieldValue] = useState<string | number | boolean | object | null>(null)
+    const [newFieldValue, setNewFieldValue] = useState<string | number | boolean | object>('')
     const [newFieldType, setNewFieldType] = useState("string")
 
     const [newObjectName, setNewObjectName] = useState("")
@@ -88,12 +88,12 @@ export const DocumentView = () => {
         }
 
         delete current[keys[keys.length - 1]];
-        // setDocuments(removeNullObjects(newData));
+        const noNullData = removeNullObjects(newData);
         if (main) {
             // alert(documentPath)
-            setDocuments(newData);
+            setDocuments(noNullData);
         } else {
-            setDocs(newData)
+            setDocs(noNullData)
         }
 
         // setDocuments(newData);
@@ -168,7 +168,8 @@ export const DocumentView = () => {
         // }));
     }
 
-    const handleFieldDelete = (field: string) => {
+    const handleFieldDelete = async (field: string) => {
+        if (!window.confirm(`Are you sure you want to delete "${field}"?`)) return;
         // alert(documentPath + `.${field}`)
 
 
@@ -176,6 +177,9 @@ export const DocumentView = () => {
         deleteValueAtPath(false, docs, `${field}`)
         // setDocs(removeNullObjects(docs));
         deleteValueAtPath(true, documents, documentPath + `.${field}`)
+
+        await updateDocument(collectionName!, documentName, documents[documentName])
+        setFetch(true);
         // setDocuments(removeNullObjects(documents));
     }
 
@@ -369,7 +373,6 @@ export const DocumentView = () => {
                                 // setDocs(removeNullObjects(docs));
                                 // setDocuments(removeNullObjects(documents));
                                 await updateDocument(collectionName!, documentName, documents[documentName])
-                                // await updateDocument(collectionName!, documentName, documents[documentName])
                                 setFetch(true);
                                 toast("Document Updated", "ok")
                             }}>Save Document</Button>
@@ -628,9 +631,10 @@ export const DocumentView = () => {
                             </Modal.Body>
 
                             <Modal.Footer>
-                                <Button className="btn btn-success btn-sm" onClick={() => {
+                                <Button className="btn btn-success btn-sm" onClick={async () => {
 
                                     if (Array.isArray(getValueFromPath(documents, documentPath))) {
+                                        if (newFieldValue === null) setNewFieldValue('');
                                         const addItem = getValueFromPath(documents, documentPath);
                                         if (addItem.length > 0) {
                                             if (typeof addItem[0] === 'string') addItem.push(newFieldValue);
@@ -647,7 +651,10 @@ export const DocumentView = () => {
 
                                         // handleFieldChange(getLastSegment(documentPath, '.'), addItem[addItem.length - 1])
                                         handleFieldChange(String(addItem.length - 1), addItem[addItem.length - 1])
-                                        setNewFieldValue(null);
+                                        setNewFieldValue('');
+
+                                        // await updateDocument(collectionName!, documentName, documents[documentName])
+                                        // setFetch(true);
 
                                         toast("Field created successfully", "ok")
                                         setShowAddField(false)
@@ -656,7 +663,7 @@ export const DocumentView = () => {
                                     }
 
                                     if (getValueFromPath(documents, documentPath + `.${newFieldName}`) === undefined) {
-
+                                        if (newFieldValue === null) setNewFieldValue('');
                                         switch (newFieldType) {
                                             case 'string':
                                                 handleFieldChange(newFieldName, newFieldValue);
@@ -668,7 +675,9 @@ export const DocumentView = () => {
                                                 handleFieldChange(newFieldName, Boolean(newFieldValue));
                                                 break;
                                         }
-                                        setNewFieldValue(null)
+                                        // await updateDocument(collectionName!, documentName, documents[documentName])
+                                        // setFetch(true);
+                                        setNewFieldValue('')
                                         setShowAddField(false)
                                         toast("Field created successfully", "ok")
                                     } else {
@@ -730,7 +739,7 @@ export const DocumentView = () => {
                             </Modal.Body>
 
                             <Modal.Footer>
-                                <Button className="btn btn-success btn-sm" onClick={() => {
+                                <Button className="btn btn-success btn-sm" onClick={async () => {
 
                                     if (getValueFromPath(documents, documentPath + `.${newObjectName}`) === undefined) {
                                         switch (newObjectType) {
@@ -741,12 +750,14 @@ export const DocumentView = () => {
                                                 handleFieldChange(newObjectName, []);
                                                 break;
                                         }
-
+                                        // await updateDocument(collectionName!, documentName, documents[documentName])
+                                        // setFetch(true);
                                         // handleFieldChange(newFieldName, newFieldValue);
+
                                         setShowAddObject(false)
                                         toast("Object created successfully", "ok")
                                     } else {
-                                        toast("Objectalready exists", "error")
+                                        toast("Object already exists", "error")
                                     }
 
                                 }}>Add</Button>

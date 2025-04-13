@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Button, Form, ListGroup, Container, Modal } from "react-bootstrap";
+import { Button, Form, ListGroup, Container, Modal, Row, Col, Card } from "react-bootstrap";
 
 import { api, API_URL } from '../services/AuthService';
 import { toast } from "../services/api";
@@ -177,56 +177,78 @@ const FileManager = () => {
     };
 
     return (
-        <Container className="mt-4">
-            <h2>File Manager</h2>
-            {/* Storage Info */}
-            <div className="sticky-bottom alert alert-info">
-                <strong>Total Storage:</strong> {Math.round(storageInfo.limit / 1e6)} MB |
-                <strong> Available:</strong> {Math.round(storageInfo.available / 1e6)} MB |
-                <strong> Used:</strong> {Math.round(storageInfo.used / 1e6)} MB
-            </div>
-            <Form onSubmit={handleFileUpload} className="mb-3">
-                <Form.Group>
-                    <Form.Control
-                        type="file"
-                        onChange={(e) => {
-                            const target = e.target as HTMLInputElement;
-                            if (target.files) {
-                                setSelectedFile(target.files[0])
-                            }
-                        }
-                        }
-                    />
-                </Form.Group>
-                <Button type="submit" variant="primary" className="mt-2">Upload</Button>
-            </Form>
-            {/* <ListGroup> */}
-            <div className="row border-bottom py-2 align-items-center">
-                <div className="col-4">Name</div>
-                <div className="col-3">Size</div>
-                <div className="col-4">Actions</div>
-            </div>
-            {files.map((file, index) => (
-                <div key={index} className="row border-bottom py-2 align-items-center">
-                    {/* <ListGroup.Item key={index}> */}
+        <Container className="m-5">
+            <Card>
+                <Card.Header>
+                    <Card.Title><h2>File Manager</h2></Card.Title>
+                    <Card.Subtitle> {/* Storage Info */}
+                        <div className="sticky-bottom alert alert-info">
+                            <strong>Total Storage:</strong> {Math.round(storageInfo.limit / 1e6)} MB |
+                            <strong> Available:</strong> {Math.round(storageInfo.available / 1e6)} MB |
+                            <strong> Used:</strong> {Math.round(storageInfo.used / 1e6)} MB
+                        </div></Card.Subtitle>
+                </Card.Header>
 
-                    <div className="col-4">{file}</div>
-                    <div className="col-3"><small>({fileSizes[file] ? `${fileSizes[file]} bytes` : "Unknown"})</small></div>
-                    <div className="col-4">
-                        <Button variant="primary" size="sm" onClick={() => viewFile(file)}>
-                            View
-                        </Button>
-                        <Button variant="success" size="sm" className="ms-2" onClick={() => handleDownload(file)}>
-                            Download
-                        </Button>
-                        <Button variant="danger" size="sm" className="ms-2" onClick={() => handleDelete(file)}>
-                            Delete
-                        </Button>
+                <Card.Body>
+
+                    {/* <ListGroup> */}
+                    <div className="row border-bottom py-2 align-items-center">
+                        <div className="col-4">Name</div>
+                        <div className="col-3">Size</div>
+                        <div className="col-4">Actions</div>
                     </div>
-                    {/* </ListGroup.Item> */}
+                    {files.map((file, index) => (
+                        <div key={index} className="row border-bottom py-2 align-items-center overflow-scroll">
+                            {/* <ListGroup.Item key={index}> */}
 
-                </div>
-            ))}
+                            <div className="col-4">{file}</div>
+                            <div className="col-3"><small>({fileSizes[file] ? `${fileSizes[file]} bytes` : "Unknown"})</small></div>
+                            <div className="col-4">
+                                <Button variant="primary" size="sm" onClick={() => viewFile(file)}>
+                                    View
+                                </Button>
+                                <Button variant="success" size="sm" className="ms-2" onClick={() => handleDownload(file)}>
+                                    Download
+                                </Button>
+                                <Button variant="danger" size="sm" className="ms-2" onClick={() => handleDelete(file)}>
+                                    Delete
+                                </Button>
+                            </div>
+                            {/* </ListGroup.Item> */}
+
+                        </div>
+                    ))}
+
+                </Card.Body>
+                <Card.Footer>
+                    <Form onSubmit={handleFileUpload} className="container mb-2">
+                        <Form.Group>
+                            <Row>
+                                <Col>
+                                    <Form.Control
+                                        type="file"
+                                        onChange={(e) => {
+                                            const target = e.target as HTMLInputElement;
+                                            if (target.files) {
+                                                setSelectedFile(target.files[0])
+                                            }
+                                        }
+                                        }
+                                    />
+                                </Col>
+                                <Col>
+                                    <Button type="submit" variant="primary" className="mt-2">Upload</Button>
+                                </Col>
+                            </Row>
+                        </Form.Group>
+
+                    </Form>
+                </Card.Footer>
+            </Card>
+
+
+
+
             {/* </ListGroup> */}
             {/* File Viewer Modal */}
             <Modal show={showModal} onHide={() => setShowModal(false)}>
