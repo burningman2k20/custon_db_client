@@ -64,7 +64,7 @@ export default function Collections() {
 
     return (
         <div className="container mt-4">
-            <h2 className="mb-4">Collections</h2>
+            {/* <h2 className="mb-4">Collections</h2> */}
 
             {/* Create New Collection */}
             <div className="card m-lg-5 shadow-lg">

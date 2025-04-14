@@ -57,18 +57,18 @@ export const DocumentsList = () => {
     return (
         <>
             <div className="container mt-4">
-                <h2>Documents</h2>
+                {/* <h2>Documents</h2> */}
                 <div className="card mt-lg-5 mb-lg-3 mx-lg-5 shadow-lg">
                     <div className="card-header">
                         <div className="d-flex justify-content-between">
                             <h5>Collection : {collectionName}</h5>
                             <div className="justify-content-end">
-                                <Button className="btn btn-success btn-sm" onClick={() => {
+                                <Button className="btn btn-success btn-sm mx-1" onClick={() => {
                                     // window.history.back();
                                     setShowAddDocument(true)
                                 }}>Add</Button>
 
-                                <Button className="btn btn-primary btn-sm" onClick={() => {
+                                <Button className="btn btn-primary btn-sm mx-1" onClick={() => {
                                     window.history.back();
                                 }}>Back</Button>
                             </div>

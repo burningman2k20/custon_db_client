@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom"
 import { DocumentType, getDocuments, toast, updateDocument } from "../services/api"
-import { Button, Col, FloatingLabel, Form, Modal, Row, Table, Toast } from "react-bootstrap";
+import { Breadcrumb, BreadcrumbItem, Button, Col, FloatingLabel, Form, Modal, Row, Table, Toast } from "react-bootstrap";
 import { render } from "@testing-library/react";
 import { set } from "lodash";
 
@@ -22,6 +22,7 @@ export const DocumentView = () => {
     const [newFieldName, setNewFieldName] = useState("")
     const [newFieldValue, setNewFieldValue] = useState<string | number | boolean | object>('')
     const [newFieldType, setNewFieldType] = useState("string")
+    const [dateValue, setDateValue] = useState("")
 
     const [newObjectName, setNewObjectName] = useState("")
     const [newObjectType, setNewObjectType] = useState("object")
@@ -183,12 +184,17 @@ export const DocumentView = () => {
         // setDocuments(removeNullObjects(documents));
     }
 
+    function isDateString(str: string) {
+        const date = new Date(str);
+        return !isNaN(date.getTime()); // valid date?
+    }
+
     const renderField = (field: string, value: any) => {
         // var val = value;
         return (
             <>
 
-                {typeof value === 'string' && (
+                {typeof value === 'string' && !isDateString(value) && (
                     <>
                         <td>
                             {/* <Form.Group> */}
@@ -213,6 +219,44 @@ export const DocumentView = () => {
                             </Form.Control>
                             {/* </Form.Group> */}
                         </td>
+
+
+                        <td>
+                            <Button className="btn btn-danger btn-sm" onClick={() => { handleFieldDelete(field) }}>Delete</Button>
+                            {/* <Button className="btn btn-primary btn-sm" onClick={() => {
+                                alert(documentPath + `.${field}`)
+                            }}>view</Button> */}
+                        </td>
+                    </>
+                )}
+
+                {typeof value === 'string' && isDateString(value) && (
+                    <>
+                        <td>
+                            {/* <Form.Group> */}
+                            <Form.Label>{field}</Form.Label>
+                        </td>
+                        <td>
+                            {/* {typeof value} */}
+                            date
+                        </td>
+                        <td>
+                            <Form.Control
+                                value={value}
+                                type="date"
+                                onChange={(e) => handleFieldChange(field, `${e.target.value}`)}
+                                onKeyDown={(e) => {
+                                    // if (e.key === "Enter") {
+                                    //     alert(documentPath + `.${field}`)
+                                    //     alert(value)
+                                    //     // setValueAtPath(documents, documentPath + `.${field}`, value);
+                                    // }
+                                }}
+                            >
+                            </Form.Control>
+                            {/* </Form.Group> */}
+                        </td>
+
 
                         <td>
                             <Button className="btn btn-danger btn-sm" onClick={() => { handleFieldDelete(field) }}>Delete</Button>
@@ -300,13 +344,22 @@ export const DocumentView = () => {
         return count;
     }
 
+    const docPath = documentPath.replace('/', '.').split('.');
     // alert(documentName)
     return (
         <div className="container mt-4">
-            <div className="card shadow-lg">
-                <div className="card-header d-flex justify-content-between">
-                    <h5>Document Details</h5>
-                    <Button className="btn btn-primary btn-sm" onClick={() => {
+            <div className="card shadow-lg  header-sticky sticky-top">
+                <div className="card-header d-flex justify-content-between ">
+                    <h5>Document '{documentName}' Details</h5>
+                    <Button className="btn btn-success btn-sm mx-1" onClick={async () => {
+                        // setDocs(removeNullObjects(docs));
+                        // setDocuments(removeNullObjects(documents));
+                        await updateDocument(collectionName!, documentName, documents[documentName])
+                        setFetch(true);
+                        toast("Document Updated", "ok")
+                    }}>Save Document</Button>
+
+                    <Button className="btn btn-primary btn-sm mx-2" onClick={() => {
                         if (documentPath !== documentName) {
                             setDocumentPath(removeLastSegment(documentPath, '.'));
                             setFetch(true)
@@ -318,7 +371,7 @@ export const DocumentView = () => {
 
 
                 </div>
-                <div className="card-body mb-1">
+                {/* <div className="card-body mb-1">
                     <div className="d-flex justify-content-between">
                         <h5>Collection:</h5>{collectionName}
                     </div>
@@ -326,10 +379,8 @@ export const DocumentView = () => {
                         <h5>Document Name:</h5>{documentName}
                     </div>
 
-                    {/* <div className="card-footer">
-                        
-                    </div> */}
-                </div>
+                 
+                </div> */}
 
             </div>
             {/* <div>{documentPath.replace('/', '.')}</div> */}
@@ -340,9 +391,26 @@ export const DocumentView = () => {
                 <div className="card-title">
                     <div className="d-flex justify-content-between">
                         {!Array.isArray(getValueFromPath(documents, documentPath)) ? (
-                            <div className="m-3 fw-bold">Object Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div>
+                            <div className="m-3 fw-bold">Object Path:<div className="fw-normal">
+                                <Breadcrumb>
+                                    {docPath.map((item, index) => (
+                                        <BreadcrumbItem>{item}</BreadcrumbItem>
+                                    ))}
+
+                                </Breadcrumb>
+                                {/* {documentPath.replace('.', '/')} */}
+                            </div></div>
+
                         ) : (
-                            <div className="m-3 fw-bold">Array Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div>
+                            <div className="m-3 fw-bold">Array Path:<div className="fw-normal">
+                                {/* {documentPath.replace('.', '/')} */}
+                                <Breadcrumb>
+                                    {docPath.map((item, index) => (
+                                        <BreadcrumbItem>{item}</BreadcrumbItem>
+                                    ))}
+
+                                </Breadcrumb>
+                            </div></div>
                         )}
 
                         {/* <div className="m-3 fw-bold">Object Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div> */}
@@ -365,17 +433,11 @@ export const DocumentView = () => {
                     </div>
                 )}</div> */}
                         <div className="m-4 d-flex justify-content-end">
-                            <Button className="btn btn-success btn-sm" onClick={() => {
+                            <Button className="btn btn-success btn-sm mx-1" onClick={() => {
                                 // window.history.back();
                                 setShowAddObject(true)
                             }}>Add Object</Button>
-                            <Button className="btn btn-success btn-sm" onClick={async () => {
-                                // setDocs(removeNullObjects(docs));
-                                // setDocuments(removeNullObjects(documents));
-                                await updateDocument(collectionName!, documentName, documents[documentName])
-                                setFetch(true);
-                                toast("Document Updated", "ok")
-                            }}>Save Document</Button>
+
 
                         </div>
 
@@ -456,7 +518,7 @@ export const DocumentView = () => {
                 }
                 <div className="d-flex justify-content-end mx-sm-4">
                     {/* <div>Fields</div> */}
-                    <Button className="btn btn-success btn-sm" onClick={() => {
+                    <Button className="btn btn-success btn-sm mx-1" onClick={() => {
                         // window.history.back();
                         setShowAddField(true)
                     }}>Add Field</Button>
@@ -570,6 +632,24 @@ export const DocumentView = () => {
                                             />
                                         </div>
                                     )}
+                                    {newFieldType === 'date' && (
+                                        <div className="mb-3">
+                                            <Form.Label>Field Value: </Form.Label>
+                                            {/* <Button>Date Picker</Button> */}
+                                            <input
+                                                type="date"
+                                                value={dateValue}
+                                                onChange={(e) => setDateValue(e.target.value)}
+                                            />
+                                            {/* <Form.Check
+                                                type="switch"
+                                                checked={newFieldValue as boolean}
+                                                onChange={(e) => {
+                                                    setNewFieldValue(e.currentTarget.checked)
+                                                }}
+                                            /> */}
+                                        </div>
+                                    )}
 
 
 
@@ -640,12 +720,13 @@ export const DocumentView = () => {
                                             if (typeof addItem[0] === 'string') addItem.push(newFieldValue);
                                             else if (typeof addItem[0] === 'number') addItem.push(Number(newFieldValue));
                                             else if (typeof addItem[0] === 'boolean') addItem.push(Boolean(newFieldValue));
+                                            else if (newFieldType === 'date') addItem.push(String(dateValue));
                                             // else addItem.push(String(newFieldValue));
                                         } else {
                                             if (newFieldType === 'string') addItem.push(newFieldValue);
                                             else if (newFieldType === 'number') addItem.push(Number(newFieldValue));
                                             else if (newFieldType === 'boolean') addItem.push(Boolean(newFieldValue));
-                                            // else addItem.push(String(newFieldValue));
+                                            else if (newFieldType === 'date') addItem.push(String(dateValue));
                                         }
 
 
@@ -673,6 +754,9 @@ export const DocumentView = () => {
                                                 break;
                                             case 'boolean':
                                                 handleFieldChange(newFieldName, Boolean(newFieldValue));
+                                                break;
+                                            case 'date':
+                                                handleFieldChange(newFieldName, dateValue);
                                                 break;
                                         }
                                         // await updateDocument(collectionName!, documentName, documents[documentName])

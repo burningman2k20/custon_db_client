@@ -26,13 +26,25 @@ code {
 }
 
 .pad-under-navbar {
-  top: 55px !important;
+  top: 107px !important;
   /* Push it below navbar */
-  z-index: 1020;
+  z-index: 1001;
   /* stay above content */
 }
 
 .img-size {
   width: 25% !important;
   height: 25% !important;
+}
+
+.header-sticky {
+  /* position: sticky; */
+  top: 56px !important;
+  /* height of navbar */
+  z-index: 1002;
+  /* background: white; */
+}
+
+.my-navbar {
+  z-index: 9999;
 }

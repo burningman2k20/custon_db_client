@@ -8,7 +8,7 @@ function Navbar() {
     // alert(displayName)
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top my-navbar">
             <div className="container-fluid">
                 <a className="navbar-brand">
                     Custom Rest API Database
