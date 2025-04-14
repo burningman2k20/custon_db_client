@@ -8,7 +8,7 @@ function Navbar() {
     // alert(displayName)
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top my-navbar">
+        <nav className="navbar navbar-expand-lg navbar-dark bg-dark my-navbar sticky-top" >
             <div className="container-fluid">
                 <a className="navbar-brand">
                     Custom Rest API Database
@@ -27,18 +27,9 @@ function Navbar() {
                                         Dashboard
                                     </a>
                                 </li>
-                                {/* <li className="nav-item">
-                                    <a className="nav-link" href="/storage">
-                                        Storage
-                                    </a>
-                                </li>
-                                <li className="nav-item">
-                                    <a className="nav-link" href="/collections/">
-                                        Collections
-                                    </a>
-                                </li> */}
+
                             </ul>
-                            {/* <span className="navbar-text me-3">Hello, {user.email}</span> */}
+
                             <button className="btn btn-outline-light" onClick={logout}>
                                 Logout
                             </button>

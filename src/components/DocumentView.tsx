@@ -4,6 +4,7 @@ import { DocumentType, getDocuments, toast, updateDocument } from "../services/a
 import { Breadcrumb, BreadcrumbItem, Button, Col, FloatingLabel, Form, Modal, Row, Table, Toast } from "react-bootstrap";
 import { render } from "@testing-library/react";
 import { set } from "lodash";
+import SimpleDateTimePicker from "./SimpleDateTimePicker";
 
 export const DocumentView = () => {
     const { collectionName, documentName } = useParams<{ collectionName: string, documentName: string }>()
@@ -23,6 +24,7 @@ export const DocumentView = () => {
     const [newFieldValue, setNewFieldValue] = useState<string | number | boolean | object>('')
     const [newFieldType, setNewFieldType] = useState("string")
     const [dateValue, setDateValue] = useState("")
+    const [timeValue, setTimeValue] = useState("")
 
     const [newObjectName, setNewObjectName] = useState("")
     const [newObjectType, setNewObjectType] = useState("object")
@@ -189,6 +191,12 @@ export const DocumentView = () => {
         return !isNaN(date.getTime()); // valid date?
     }
 
+    const splitTimeDate = (str: string, choose: string) => {
+        if (str.indexOf(' ') < 1) return str;
+        if (choose === 'time') return str.split(' ')[1];
+        if (choose === 'date') return str.split(' ')[0];
+    }
+
     const renderField = (field: string, value: any) => {
         // var val = value;
         return (
@@ -241,19 +249,39 @@ export const DocumentView = () => {
                             date
                         </td>
                         <td>
-                            <Form.Control
-                                value={value}
-                                type="date"
-                                onChange={(e) => handleFieldChange(field, `${e.target.value}`)}
-                                onKeyDown={(e) => {
-                                    // if (e.key === "Enter") {
-                                    //     alert(documentPath + `.${field}`)
-                                    //     alert(value)
-                                    //     // setValueAtPath(documents, documentPath + `.${field}`, value);
-                                    // }
-                                }}
-                            >
-                            </Form.Control>
+                            <div className="d-flex">
+                                <Form.Control
+                                    value={splitTimeDate(value, 'date')}
+                                    type="date"
+                                    onChange={(e) => handleFieldChange(field, `${e.target.value} ${splitTimeDate(value, 'time')}`)}
+                                    onKeyDown={(e) => {
+                                        // if (e.key === "Enter") {
+                                        //     alert(documentPath + `.${field}`)
+                                        //     alert(value)
+                                        //     // setValueAtPath(documents, documentPath + `.${field}`, value);
+                                        // }
+                                    }}
+                                >
+                                </Form.Control>
+                                <Form.Control
+                                    value={splitTimeDate(value, 'time')}
+                                    type="time"
+                                    onChange={(e) => handleFieldChange(field, `${splitTimeDate(value, 'date')} ${e.target.value}`)}
+                                    onKeyDown={(e) => {
+                                        // if (e.key === "Enter") {
+                                        //     alert(documentPath + `.${field}`)
+                                        //     alert(value)
+                                        //     // setValueAtPath(documents, documentPath + `.${field}`, value);
+                                        // }
+                                    }}
+                                >
+                                </Form.Control>
+                            </div>
+                            {/* <SimpleDateTimePicker
+                                initialValue={value}
+                                onChange={(val) => alert(`Updated value: ${val}`)}
+                            /> */}
+
                             {/* </Form.Group> */}
                         </td>
 
@@ -371,6 +399,30 @@ export const DocumentView = () => {
 
 
                 </div>
+                <div className="d-flex justify-content-between">
+                    {!Array.isArray(getValueFromPath(documents, documentPath)) ? (
+                        <div className="m-3 fw-bold">Object Path:<div className="fw-normal">
+                            <Breadcrumb>
+                                {docPath.map((item, index) => (
+                                    <BreadcrumbItem>{item}</BreadcrumbItem>
+                                ))}
+
+                            </Breadcrumb>
+                            {/* {documentPath.replace('.', '/')} */}
+                        </div></div>
+
+                    ) : (
+                        <div className="m-3 fw-bold">Array Path:<div className="fw-normal">
+                            {/* {documentPath.replace('.', '/')} */}
+                            <Breadcrumb>
+                                {docPath.map((item, index) => (
+                                    <BreadcrumbItem>{item}</BreadcrumbItem>
+                                ))}
+
+                            </Breadcrumb>
+                        </div></div>
+                    )}
+                </div>
                 {/* <div className="card-body mb-1">
                     <div className="d-flex justify-content-between">
                         <h5>Collection:</h5>{collectionName}
@@ -389,32 +441,11 @@ export const DocumentView = () => {
 
             <div className="card">
                 <div className="card-title">
-                    <div className="d-flex justify-content-between">
-                        {!Array.isArray(getValueFromPath(documents, documentPath)) ? (
-                            <div className="m-3 fw-bold">Object Path:<div className="fw-normal">
-                                <Breadcrumb>
-                                    {docPath.map((item, index) => (
-                                        <BreadcrumbItem>{item}</BreadcrumbItem>
-                                    ))}
+                    {/* <div className="d-flex justify-content-end"> */}
 
-                                </Breadcrumb>
-                                {/* {documentPath.replace('.', '/')} */}
-                            </div></div>
 
-                        ) : (
-                            <div className="m-3 fw-bold">Array Path:<div className="fw-normal">
-                                {/* {documentPath.replace('.', '/')} */}
-                                <Breadcrumb>
-                                    {docPath.map((item, index) => (
-                                        <BreadcrumbItem>{item}</BreadcrumbItem>
-                                    ))}
-
-                                </Breadcrumb>
-                            </div></div>
-                        )}
-
-                        {/* <div className="m-3 fw-bold">Object Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div> */}
-                        {/* <div>{typeof getValueFromPath(documents, documentPath) === 'object' && !Array.isArray(getValueFromPath(documents, documentPath)) && (
+                    {/* <div className="m-3 fw-bold">Object Path:<div className="fw-normal">{documentPath.replace('.', '/')}</div></div> */}
+                    {/* <div>{typeof getValueFromPath(documents, documentPath) === 'object' && !Array.isArray(getValueFromPath(documents, documentPath)) && (
                             <div className="m-3">
                                 <div><strong>Type: </strong>Object</div>
                         <div>
@@ -432,16 +463,16 @@ export const DocumentView = () => {
                         </div>
                     </div>
                 )}</div> */}
-                        <div className="m-4 d-flex justify-content-end">
-                            <Button className="btn btn-success btn-sm mx-1" onClick={() => {
-                                // window.history.back();
-                                setShowAddObject(true)
-                            }}>Add Object</Button>
+                    <div className="m-3 d-flex justify-content-end">
+                        <Button className="btn btn-success btn-sm mx-1" onClick={() => {
+                            // window.history.back();
+                            setShowAddObject(true)
+                        }}>Add Object</Button>
 
-
-                        </div>
 
                     </div>
+
+                    {/* </div> */}
 
                 </div>
 
@@ -520,6 +551,9 @@ export const DocumentView = () => {
                     {/* <div>Fields</div> */}
                     <Button className="btn btn-success btn-sm mx-1" onClick={() => {
                         // window.history.back();
+                        setNewFieldType("string");
+                        setNewFieldName("");
+                        setNewFieldValue("")
                         setShowAddField(true)
                     }}>Add Field</Button>
                 </div>
@@ -633,13 +667,25 @@ export const DocumentView = () => {
                                         </div>
                                     )}
                                     {newFieldType === 'date' && (
-                                        <div className="mb-3">
-                                            <Form.Label>Field Value: </Form.Label>
+                                        <div className="d-flex mb-3">
+                                            <Form.Label>Value: </Form.Label>
                                             {/* <Button>Date Picker</Button> */}
                                             <input
                                                 type="date"
+                                                className="form-control"
                                                 value={dateValue}
                                                 onChange={(e) => setDateValue(e.target.value)}
+                                            />
+                                            <input
+                                                type="time"
+                                                className="form-control"
+                                                value={timeValue}
+                                                onChange={(e) => setTimeValue(e.target.value)}
+                                            />
+                                            {/*<SimpleDateTimePicker
+                                                initialValue="2025-04-14T16:30:00.000Z"
+                                                // onChange={(val) => console.log("Updated value:", val)}
+                                                onChange={(val) => setDateValue(val)}
                                             />
                                             {/* <Form.Check
                                                 type="switch"
@@ -720,13 +766,13 @@ export const DocumentView = () => {
                                             if (typeof addItem[0] === 'string') addItem.push(newFieldValue);
                                             else if (typeof addItem[0] === 'number') addItem.push(Number(newFieldValue));
                                             else if (typeof addItem[0] === 'boolean') addItem.push(Boolean(newFieldValue));
-                                            else if (newFieldType === 'date') addItem.push(String(dateValue));
+                                            else if (newFieldType === 'date') addItem.push(String(dateValue + ' ' + timeValue));
                                             // else addItem.push(String(newFieldValue));
                                         } else {
                                             if (newFieldType === 'string') addItem.push(newFieldValue);
                                             else if (newFieldType === 'number') addItem.push(Number(newFieldValue));
                                             else if (newFieldType === 'boolean') addItem.push(Boolean(newFieldValue));
-                                            else if (newFieldType === 'date') addItem.push(String(dateValue));
+                                            else if (newFieldType === 'date') addItem.push(String(dateValue + ' ' + timeValue));
                                         }
 
 
@@ -756,7 +802,7 @@ export const DocumentView = () => {
                                                 handleFieldChange(newFieldName, Boolean(newFieldValue));
                                                 break;
                                             case 'date':
-                                                handleFieldChange(newFieldName, dateValue);
+                                                handleFieldChange(newFieldName, dateValue + ' ' + timeValue);
                                                 break;
                                         }
                                         // await updateDocument(collectionName!, documentName, documents[documentName])

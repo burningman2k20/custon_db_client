@@ -49,6 +49,7 @@
     ]
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.16"
+    "@types/lodash": "^4.17.16",
+    "@types/luxon": "^3.6.2"
   }
 }

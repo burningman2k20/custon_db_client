@@ -26,9 +26,10 @@ code {
 }
 
 .pad-under-navbar {
-  top: 107px !important;
+  top: 202px !important;
+  position: absolute;
   /* Push it below navbar */
-  z-index: 1001;
+  z-index: 50;
   /* stay above content */
 }
 
@@ -38,13 +39,14 @@ code {
 }
 
 .header-sticky {
-  /* position: sticky; */
+  position: absolute;
   top: 56px !important;
   /* height of navbar */
-  z-index: 1002;
+  z-index: 50;
   /* background: white; */
 }
 
 .my-navbar {
+  position: absolute;
   z-index: 9999;
 }
