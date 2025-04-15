@@ -17,7 +17,7 @@ export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-proje
 // export const [documentPath, setDocumentPath] = useState("")
 
 export interface DocumentType {
-    [key: string]: any;
+    [key: string]: any | DocumentType | DocumentType[];
 }
 
 export const GetUser = async () => {
@@ -37,8 +37,8 @@ export const getDocument = async (collection: string, docId: string) => {
     return response.data;
 };
 
-export const getDocuments = async (collection: string) => {
-    const response = await api.get(`${API_URL}${collection}/documents`);
+export const getDocuments = async (collection: string, extraPath = "/documents") => {
+    const response = await api.get(`${API_URL}${collection}${extraPath}`);
     return response.data;
 };
 

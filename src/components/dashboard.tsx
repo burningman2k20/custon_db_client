@@ -52,6 +52,25 @@ export function Dashboard() {
                                 <button className="btn btn-primary" onClick={() => navigate('/collections')}>Collections</button>
                             </div>
                         </div>
+
+
+                        <div className="card">
+                            <div className="card-header">
+                                <div className="card-title"><img className="img-thumbnail img-size" src='search_icon.png' />Search Database Collections</div>
+                            </div>
+                            <div className="card-body">
+                                <div className="card-img-top">
+
+                                </div>
+                                <div className="card-text">
+                                    <p>Search the current users database collections. </p>
+
+                                </div>
+                            </div>
+                            <div className="card-footer">
+                                <button className="btn btn-primary" onClick={() => navigate('/search')}>Search...</button>
+                            </div>
+                        </div>
                     </div>
 
                 </div>

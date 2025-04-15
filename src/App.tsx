@@ -23,6 +23,7 @@ import { Profile } from './components/Profile';
 import { DocumentsList } from './components/DocumentsList';
 import { DocumentView } from './components/DocumentView';
 import { CollectionWrapper } from './components/CollectionWrapper';
+import Search from './components/Search';
 
 const App = () => {
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
@@ -99,6 +100,11 @@ const App = () => {
                 <CollectionDetail />
               </ProtectedRoute>
             } /> */}
+            <Route path="/search" element={
+              <ProtectedRoute>
+                <Search />
+              </ProtectedRoute>
+            } />
             <Route path="/storage" element={
               <ProtectedRoute>
                 <FileManager />
