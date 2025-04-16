@@ -15,7 +15,7 @@ export function Dashboard() {
                 </div>
                 <div className="card-body">
 
-                    <div className="container d-flex col-sm-10">
+                    <div className="container col-sm-10">
                         <div className="card">
                             <div className="card-header">
                                 <div className="card-title"><img className="img-thumbnail img-size" src='storage_icon.png' />File Storage</div>

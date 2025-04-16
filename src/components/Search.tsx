@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Fuse, { FuseResult } from "fuse.js";
 import { getCollections, getDocuments, toast } from "../services/api";
-import { Breadcrumb, BreadcrumbItem, FloatingLabel, Form } from "react-bootstrap";
+import { Breadcrumb, BreadcrumbItem, Button, Card, FloatingLabel, Form } from "react-bootstrap";
 
 
 const Search = () => {
@@ -86,6 +86,11 @@ const Search = () => {
                 const value = obj[key];
                 const path = [...currentPath, key];
 
+                // Check if the key matches
+                if (key.toLowerCase().includes(term.toLowerCase())) {
+                    results.push({ path: currentPath, key, value });
+                }
+
                 // Match strings or convert primitives to string
                 if (
                     typeof value === "string" &&
@@ -111,6 +116,20 @@ const Search = () => {
         return results;
     }
 
+
+    const highlightMatch = (text: string, term: string) => {
+        // alert('|' + text + '|')
+        if (term === '') return
+        const parts = text.split(new RegExp(`(${term})`, "gi"));
+        return parts.map((part, i) =>
+            part.toLowerCase() === term.toLowerCase() ? (
+                <mark style={{ background: "lightblue" }} key={i}>{part}</mark>
+            ) : (
+                part
+            )
+        );
+    }
+
     function searchRecordForTerm(
         record: Record<string, DocumentType>,
         term: string
@@ -118,6 +137,13 @@ const Search = () => {
         const allResults: MatchResult[] = [];
         const lowerTerm = term.toLowerCase();
 
+        // for (const docId in record) {
+        //     const doc = record[docId];
+        //     const matches = searchJsonForTerm(record, lowerTerm);
+        //     matches.forEach((m) => {
+        //         allResults.push({doc, ...m });
+        //     });
+        // }
         for (const docId in record) {
             const doc = record[docId];
             const matches = searchJsonForTerm(doc, lowerTerm);
@@ -130,31 +156,20 @@ const Search = () => {
     }
 
     const handleSearch = () => {
+        if (searchTerm === '') return
         if (selectedCollection === '') setSelectedCollection(collections[0]);
         collections.forEach(async item => {
             // alert(item)
             setResults([])
-            // const data = await getDocuments(item);
             const data = await getDocuments(`${selectedCollection}`, "/documents");
-            // setDocuments(data1)
-            // setResults(searchJsonForTerm(data, "user"))
-            // setResults()
-            // const array  = [];
+
             const res = searchRecordForTerm(data, searchTerm)
             if (res.length > 0) {
-                // array.push(res);
-                setResults(searchRecordForTerm(data, searchTerm))
-                // console.log(searchRecordForTerm(data, searchTerm))
-                // setResults(prev => [...prev, res]);
-                // alert(searchTerm)
-            }
-            // setResults(array);
-            // setDocuments(data)
-            // console.log(data)
 
-            // setResults(searchDocuments(data, searchTerm, collections));
-            // console.log(results)
-            // setSearchTerm("");
+                setResults(searchRecordForTerm(data, searchTerm))
+
+            }
+
         })
 
     };
@@ -162,67 +177,90 @@ const Search = () => {
 
 
     return (
-        <div>
-            <Form.Group>
-                <FloatingLabel
-                    controlId="floatingInput1"
-                    label="Collection"
-                    className="mb-3"
-                >
-                    <Form.Select
-                        aria-label="Default select example"
-                        value={selectedCollection}
-                        onChange={(e) => {
-                            setSelectedCollection(e.currentTarget.value)
-                            // alert(e.currentTarget.value)
-                        }}>
+        <div className="container m-4">
+            <Card>
+                <Card.Header>
+                    <Card.Title>
+                        <div className="d-flex justify-content-between">
+                            Search
+                            <Button className="btn btn-primary btn-sm mx-2" onClick={() => {
+                                // if (documentPath !== documentName) {
+                                // setDocumentPath(removeLastSegment(documentPath, '.'));
+                                // setFetch(true)
+                                // } else {
+                                window.history.back();
+                                // }
 
-                        {collections.map((value) => (
-                            <option value={value}>{value}</option>
-                        ))}
+                            }}>Back</Button>
+                        </div>
 
-                    </Form.Select>
-                </FloatingLabel>
-                <FloatingLabel
-                    controlId="floatingInput1"
-                    label="Search Terms"
-                    className="mb-3"
-                >
-                    <Form.Control
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.currentTarget.value);
-                        }}
-                        placeholder="Search"
-                    />
-                </FloatingLabel>
-                {/* <input
+                    </Card.Title>
+                </Card.Header>
+                <Card.Body>
+                    <Form.Group>
+                        <FloatingLabel
+                            controlId="floatingInput1"
+                            label="Collection"
+                            className="mb-3"
+                        >
+                            <Form.Select
+                                aria-label="Default select example"
+                                value={selectedCollection}
+                                onChange={(e) => {
+                                    setSelectedCollection(e.currentTarget.value)
+                                    // alert(e.currentTarget.value)
+                                }}>
+
+                                {collections.map((value) => (
+                                    <option value={value}>{value}</option>
+                                ))}
+
+                            </Form.Select>
+                        </FloatingLabel>
+                        <FloatingLabel
+                            controlId="floatingInput1"
+                            label="Search Terms"
+                            className="mb-3"
+                        >
+                            <Form.Control
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.currentTarget.value);
+                                }}
+                                placeholder="Search"
+                            />
+                        </FloatingLabel>
+                        {/* <input
                 className="form-control mb-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search"
             /> */}
-                <button className="btn btn-primary mb-3" onClick={handleSearch}>Search</button>
-            </Form.Group>
+                        <Button className="btn btn-primary mb-3" onClick={handleSearch}>Search</Button>
+                    </Form.Group>
+                </Card.Body>
+            </Card>
+
 
             <div>
                 <h5>Results</h5>
                 {results.map((result, index) => (
                     <div key={index} className="card mb-2 p-2">
                         <Breadcrumb>
-                            <BreadcrumbItem>{result.docId}</BreadcrumbItem>
+                            <BreadcrumbItem>{highlightMatch(result.docId, searchTerm)}/{highlightMatch(result.key, searchTerm)}</BreadcrumbItem>
                             {Object.entries(result.path).map((value, index2) => (
                                 <>
-                                    <BreadcrumbItem key={index2}>{value}</BreadcrumbItem>
+                                    <BreadcrumbItem key={index2}>{highlightMatch(value[1], searchTerm)}</BreadcrumbItem>
                                 </>
                             )
 
                             )}
                         </Breadcrumb>
-                        {/* <div><strong>Path:</strong> {result.path}</div> */}
+
                         {/* <div><strong>Matched Term:</strong> "{result.term}"</div> */}
-                        <div><strong>Value:</strong> {JSON.stringify(result.value)}</div>
+                        <div><strong>Value:</strong> {highlightMatch(JSON.stringify(result.value), searchTerm)}
+                        </div>
                     </div>
                 ))}
                 {/* {Object.entries(results).map((field, value) => (

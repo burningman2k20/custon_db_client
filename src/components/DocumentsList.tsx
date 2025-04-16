@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getDocuments, toast, DocumentType, createDocument, deleteDocument } from "../services/api";
-import { Button, Form, Modal } from "react-bootstrap";
+import { Button, FloatingLabel, Form, Modal } from "react-bootstrap";
 
 type FieldType = "string" | "number" | "boolean" | "array" | "object";
 
@@ -121,12 +121,19 @@ export const DocumentsList = () => {
 
                     <Modal.Body>
                         <Form.Group>
-                            <Form.Label>Document Name:</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={newDocumentName}
-                                onChange={(e) => setNewDocumentName(e.target.value)}
-                            />
+                            <FloatingLabel
+                                controlId="floatingInput1"
+                                label="Document Name"
+                                className="mb-3"
+                            >
+                                {/* <Form.Label>Document Name:</Form.Label> */}
+                                <Form.Control
+                                    type="text"
+                                    value={newDocumentName}
+                                    onChange={(e) => setNewDocumentName(e.target.value)}
+                                    placeholder="Document Name"
+                                />
+                            </FloatingLabel>
                         </Form.Group>
                     </Modal.Body>
 

@@ -66,7 +66,7 @@ const NewCollectionDetail = () => { //{ collectionName1, viewArray }
 
     const handleSave = async (docId: string, updatedDoc: DocumentType) => {
         try {
-            await api.put(`http://10.0.0.202:3000/collections/${collectionName}/${docId}`, updatedDoc);
+            await api.put(`http://10.0.0.202:443/collections/${collectionName}/${docId}`, updatedDoc);
             alert("Document updated successfully!");
         } catch (error) {
             console.error("Error updating document", error);
