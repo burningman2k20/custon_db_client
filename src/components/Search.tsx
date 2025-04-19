@@ -29,8 +29,8 @@ const Search = () => {
             collections.forEach(item => {
 
             })
-            const data1 = await getDocuments('users', '/documents');
-            setDocuments(data1)
+            // const data1 = await getDocuments('users', '/documents');
+            // setDocuments(data1)
             // console.log(data1);
             // setDocuments(removeNullObjects(data));
             // setDocs(getValueFromPath(data, documentPath.replace('/', '.')));
@@ -90,6 +90,16 @@ const Search = () => {
                 if (key.toLowerCase().includes(term.toLowerCase())) {
                     results.push({ path: currentPath, key, value });
                 }
+
+                // currentPath.forEach((item, index) => {
+                //     if (item.toLowerCase().includes(term.toLowerCase())) {
+                //         results.push({ path: currentPath, key, value });
+                //     }
+                // })
+
+                // if (currentPath.join('/').toLowerCase().includes(term.toLowerCase())) {
+                //     results.push({ path: currentPath, key, value });
+                // }
 
                 // Match strings or convert primitives to string
                 if (

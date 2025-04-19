@@ -404,7 +404,7 @@ export const DocumentView = () => {
                         <div className="m-3 fw-bold">Object Path:<div className="fw-normal">
                             <Breadcrumb>
                                 {docPath.map((item, index) => (
-                                    <BreadcrumbItem>{item}</BreadcrumbItem>
+                                    <BreadcrumbItem key={index}>{item}</BreadcrumbItem>
                                 ))}
 
                             </Breadcrumb>

@@ -6,7 +6,9 @@ import { useState } from "react";
 export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-projects-f38fd2f8.vercel.app/"
     // "https://db-service-145948873972.northamerica-northeast1.run.app/collections/"
     // "https://custon-db-rest-api-297546668637.us-central1.run.app/collections/"
-    "http://10.0.0.202:3000/collections/"; // Update this if needed
+
+    "http://174.114.62.88/collections/";
+// "http://10.0.0.202:80/collections/"; // Update this if needed
 
 
 // export const getCollections = async () => {
@@ -21,7 +23,7 @@ export interface DocumentType {
 }
 
 export const GetUser = async () => {
-    const response = await api.get(`http://localhost:3000/auth/me`);
+    const response = await api.get(`http://174.114.62.88:80/auth/me`);
     return response.data;
 
 }

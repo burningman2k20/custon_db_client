@@ -4,7 +4,8 @@ import axios from 'axios';
 export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-projects-f38fd2f8.vercel.app/"
     //"https://db-service-145948873972.northamerica-northeast1.run.app/"
     //"https://custon-db-rest-api-297546668637.us-central1.run.app/"
-    'http://10.0.0.202:3000/';
+    // 'http://10.0.0.202:3000/';
+    "http://174.114.62.88:80/";
 
 // export const login = async (email: string, password: string) => {
 //     const res = await axios.post(`${API_URL}/login`, { email, password });

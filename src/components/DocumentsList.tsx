@@ -76,7 +76,7 @@ export const DocumentsList = () => {
                     </div>
                     <div className="card-body">List of User Documents are listed Below</div>
                 </div>
-                <br />
+                {/* <br /> */}
 
                 {/* <div className="card"> */}
                 {/* <div className="card-header"> */}
