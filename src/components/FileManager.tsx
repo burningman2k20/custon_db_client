@@ -3,7 +3,7 @@ import axios from "axios";
 import { Button, Form, ListGroup, Container, Modal, Row, Col, Card } from "react-bootstrap";
 
 import { api, API_URL } from '../services/AuthService';
-import { toast } from "../services/api";
+import { toast, USER_URL } from "../services/api";
 
 const FileManager = () => {
     const [files, setFiles] = useState([]);
@@ -37,18 +37,18 @@ const FileManager = () => {
     };
 
     // Fetch storage info
-    const fetchStorageInfo = async () => {
-        try {
-            const res = await api.get("http://localhost:3000/storage");
-            setStorageInfo(res.data);
-        } catch (error) {
-            console.error("Error fetching storage info", error);
-        }
-    };
+    // const fetchStorageInfo = async () => {
+    //     try {
+    //         const res = await api.get("http://localhost:3000/storage");
+    //         setStorageInfo(res.data);
+    //     } catch (error) {
+    //         console.error("Error fetching storage info", error);
+    //     }
+    // };
 
     const fetchUserStorage = async () => {
         try {
-            const res = await api.get(`${API_URL}user/storage`
+            const res = await api.get(`${USER_URL}storage`
                 // "http://localhost:3000/user/storage"
                 // , {
                 // headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }

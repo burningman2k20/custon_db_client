@@ -7,7 +7,10 @@ export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-proje
     // "https://db-service-145948873972.northamerica-northeast1.run.app/collections/"
     // "https://custon-db-rest-api-297546668637.us-central1.run.app/collections/"
 
-    "http://174.114.62.88/collections/";
+    "http://127.0.0.1/collections/";
+export const USER_URL = "http://127.0.0.1/user/"
+export const COLLECTION_URL = "http://127.0.0.1/collections/"
+export const AUTH_URL = "http://127.0.0.1/auth/"
 // "http://10.0.0.202:80/collections/"; // Update this if needed
 
 
@@ -23,7 +26,7 @@ export interface DocumentType {
 }
 
 export const GetUser = async () => {
-    const response = await api.get(`http://174.114.62.88:80/auth/me`);
+    const response = await api.get(`${AUTH_URL}me`);
     return response.data;
 
 }
@@ -35,25 +38,25 @@ export const getCollections = async () => {
 };
 
 export const getDocument = async (collection: string, docId: string) => {
-    const response = await api.get(`${API_URL}${collection}/documents/${docId}`);
+    const response = await api.get(`${COLLECTION_URL}${collection}/documents/${docId}`);
     return response.data;
 };
 
 export const getDocuments = async (collection: string, extraPath = "/documents") => {
-    const response = await api.get(`${API_URL}${collection}${extraPath}`);
+    const response = await api.get(`${COLLECTION_URL}${collection}${extraPath}`);
     return response.data;
 };
 
 export const createDocument = async (collection: string, docId: string, data: object) => {
-    await api.post(`${API_URL}${collection}/documents/${docId}`, data);
+    await api.post(`${COLLECTION_URL}${collection}/documents/${docId}`, data);
 };
 
 export const updateDocument = async (collection: string, docId: string, data: object) => {
-    await api.put(`${API_URL}${collection}/documents/${docId}`, data);
+    await api.put(`${COLLECTION_URL}${collection}/documents/${docId}`, data);
 };
 
 export const deleteDocument = async (collection: string, docId: string) => {
-    await api.delete(`${API_URL}${collection}/documents/${docId}`);
+    await api.delete(`${COLLECTION_URL}${collection}/documents/${docId}`);
 };
 
 // export const getCollections = async () => {
@@ -62,11 +65,11 @@ export const deleteDocument = async (collection: string, docId: string) => {
 // };
 
 export const createCollection = async (name: string) => {
-    await api.post(`${API_URL}${name}`, {});
+    await api.post(`${COLLECTION_URL}${name}`, {});
 };
 
 export const deleteCollection = async (name: string) => {
-    await api.delete(`${API_URL}${name}`, {});
+    await api.delete(`${COLLECTION_URL}${name}`, {});
     // const res = await fetch(`/api/collections/${name}`, {
     //     method: 'DELETE',
     // });

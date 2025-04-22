@@ -1,11 +1,11 @@
 import axios from 'axios';
-// import API_URL from './api'
+import { AUTH_URL } from './api'
 
 export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-projects-f38fd2f8.vercel.app/"
     //"https://db-service-145948873972.northamerica-northeast1.run.app/"
     //"https://custon-db-rest-api-297546668637.us-central1.run.app/"
     // 'http://10.0.0.202:3000/';
-    "http://174.114.62.88:80/";
+    "http://127.0.0.1/";
 
 // export const login = async (email: string, password: string) => {
 //     const res = await axios.post(`${API_URL}/login`, { email, password });
@@ -41,7 +41,7 @@ const saveAuthToken = (token: string) => {
 
 // 👉 Login
 export const login = async (email: string, password: string) => {
-    const response = await api.post(`${API_URL}auth/login`, { email, password });
+    const response = await api.post(`${AUTH_URL}login`, { email, password });
     saveAuthToken(response.data.token);
     return response.data;
 };
@@ -53,17 +53,17 @@ export const login = async (email: string, password: string) => {
 
 // 👉 Sign Up
 export const signUp = async (email: string, password: string) => {
-    const response = await api.post(`${API_URL}auth/signup`, { email, password });
+    const response = await api.post(`${AUTH_URL}signup`, { email, password });
     saveAuthToken(response.data.token);
     return response.data;
 };
 
 export const logout = async () => {
     localStorage.removeItem('token');
-    await api.post(`${API_URL}auth/logout`);
+    await api.post(`${AUTH_URL}logout`);
 };
 
 export const getCurrentUser = async () => {
-    const res = await api.get(`${API_URL}auth/me`);
+    const res = await api.get(`${AUTH_URL}me`);
     return res.data;
 };

@@ -11,6 +11,8 @@ const Search = () => {
     const [fetch, setfetch] = useState(true);
     const [collections, setCollections] = useState<string[]>([])
 
+    const [grouped, setGrouped] = useState<Record<string, MatchResult[]>>(); //Record<string, MatchResult[]> = {};
+
     const [selectedCollection, setSelectedCollection] = useState("");
 
     useEffect(() => {
@@ -25,6 +27,8 @@ const Search = () => {
             // setLoading(true);
             const data = await getCollections();
             setCollections(data);
+            // if (selectedCollection === '' || selectedCollection === undefined)
+            setSelectedCollection(data[0]);
             // console.log(data);
             collections.forEach(item => {
 
@@ -44,6 +48,18 @@ const Search = () => {
 
 
     const [searchTerm, setSearchTerm] = useState("");
+
+    function groupResultsByDocument(results: MatchResult[]) {
+        const grouped: Record<string, MatchResult[]> = {};
+
+        for (const result of results) {
+            const docId = result.path[0]; // first item is document ID
+            if (!grouped[docId]) grouped[docId] = [];
+            grouped[docId].push(result);
+        }
+
+        return grouped;
+    }
 
     const searchJsonForTerm1 = (obj: any, term: string) => {
         var path = ""
@@ -147,6 +163,8 @@ const Search = () => {
         const allResults: MatchResult[] = [];
         const lowerTerm = term.toLowerCase();
 
+        setfetch(true)
+
         // for (const docId in record) {
         //     const doc = record[docId];
         //     const matches = searchJsonForTerm(record, lowerTerm);
@@ -154,9 +172,33 @@ const Search = () => {
         //         allResults.push({doc, ...m });
         //     });
         // }
+        // for (const docId in record) {
+        //     if (searchTerm.includes(lowerTerm)) {
+        //         allResults.push({ docId:docId, path:new String[], key:'key', value:'value'  });
+        //         // results.push({ path, key, value });
+        //     }
+        //     // console.log(docId)
+        //     // const doc = record[docId];
+        //     // const matches = searchJsonForTerm(doc, lowerTerm);
+        //     // matches.forEach((m) => {
+
+        //     // });
+        // }
+
         for (const docId in record) {
+            // console.log(docId)
             const doc = record[docId];
-            const matches = searchJsonForTerm(doc, lowerTerm);
+
+            // Match document ID
+            if (docId.toLowerCase().includes(term.toLowerCase())) {
+                allResults.push({
+                    docId: docId,
+                    path: [docId],
+                    key: '',
+                    value: docId,
+                });
+            }
+            const matches = searchJsonForTerm(doc, lowerTerm, [docId]);
             matches.forEach((m) => {
                 allResults.push({ docId, ...m });
             });
@@ -165,124 +207,136 @@ const Search = () => {
         return allResults;
     }
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         if (searchTerm === '') return
-        if (selectedCollection === '') setSelectedCollection(collections[0]);
-        collections.forEach(async item => {
-            // alert(item)
-            setResults([])
-            const data = await getDocuments(`${selectedCollection}`, "/documents");
+        if (selectedCollection === undefined) setSelectedCollection(collections[0]);
+        // alert(selectedCollection)
 
-            const res = searchRecordForTerm(data, searchTerm)
-            if (res.length > 0) {
+        // collections.forEach(async item => {
+        // alert(item)
+        setResults([])
+        const data = await getDocuments(`${selectedCollection}`, "/documents");
 
-                setResults(searchRecordForTerm(data, searchTerm))
+        const res = searchRecordForTerm(data, searchTerm)
+        // if (res.length > 0) {
 
-            }
+        setResults(searchRecordForTerm(data, searchTerm))
+        setGrouped(groupResultsByDocument(res));
 
-        })
+        // }
+
+        // })
 
     };
 
 
 
     return (
-        <div className="container m-4">
-            <Card>
-                <Card.Header>
-                    <Card.Title>
-                        <div className="d-flex justify-content-between">
-                            Search
-                            <Button className="btn btn-primary btn-sm mx-2" onClick={() => {
-                                // if (documentPath !== documentName) {
-                                // setDocumentPath(removeLastSegment(documentPath, '.'));
-                                // setFetch(true)
-                                // } else {
-                                window.history.back();
-                                // }
+        <>
+            <div className="container m-4">
+                <Card>
+                    <Card.Header>
+                        <Card.Title>
+                            <div className="d-flex justify-content-between">
+                                Search
+                                <Button className="btn btn-primary btn-sm mx-2" onClick={() => {
+                                    // if (documentPath !== documentName) {
+                                    // setDocumentPath(removeLastSegment(documentPath, '.'));
+                                    // setFetch(true)
+                                    // } else {
+                                    window.history.back();
+                                    // }
 
-                            }}>Back</Button>
-                        </div>
+                                }}>Back</Button>
+                            </div>
 
-                    </Card.Title>
-                </Card.Header>
-                <Card.Body>
-                    <Form.Group>
-                        <FloatingLabel
-                            controlId="floatingInput1"
-                            label="Collection"
-                            className="mb-3"
-                        >
-                            <Form.Select
-                                aria-label="Default select example"
-                                value={selectedCollection}
-                                onChange={(e) => {
-                                    setSelectedCollection(e.currentTarget.value)
-                                    // alert(e.currentTarget.value)
-                                }}>
+                        </Card.Title>
+                    </Card.Header>
+                    <Card.Body>
+                        <Form.Group>
+                            <FloatingLabel
+                                controlId="floatingInput1"
+                                label="Collection"
+                                className="mb-3"
+                            >
+                                <Form.Select
+                                    aria-label="Default select example"
+                                    value={selectedCollection}
+                                    onChange={(e) => {
+                                        setSelectedCollection(e.currentTarget.value)
+                                        // alert(e.currentTarget.value)
+                                    }}>
 
-                                {collections.map((value) => (
-                                    <option value={value}>{value}</option>
-                                ))}
+                                    {collections.map((value) => (
+                                        <option value={value}>{value}</option>
+                                    ))}
 
-                            </Form.Select>
-                        </FloatingLabel>
-                        <FloatingLabel
-                            controlId="floatingInput1"
-                            label="Search Terms"
-                            className="mb-3"
-                        >
-                            <Form.Control
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => {
-                                    setSearchTerm(e.currentTarget.value);
-                                }}
-                                placeholder="Search"
-                            />
-                        </FloatingLabel>
-                        {/* <input
+                                </Form.Select>
+                            </FloatingLabel>
+                            <FloatingLabel
+                                controlId="floatingInput1"
+                                label="Search Terms"
+                                className="mb-3"
+                            >
+                                <Form.Control
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.currentTarget.value);
+                                    }}
+                                    placeholder="Search"
+                                />
+                            </FloatingLabel>
+                            {/* <input
                 className="form-control mb-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search"
             /> */}
-                        <Button className="btn btn-primary mb-3" onClick={handleSearch}>Search</Button>
-                    </Form.Group>
-                </Card.Body>
-            </Card>
+                            <Button className="btn btn-primary mb-3" onClick={handleSearch}>Search</Button>
+                        </Form.Group>
+                    </Card.Body>
+                </Card>
 
-
-            <div>
-                <h5>Results</h5>
-                {results.map((result, index) => (
-                    <div key={index} className="card mb-2 p-2">
-                        <Breadcrumb>
-                            <BreadcrumbItem>{highlightMatch(result.docId, searchTerm)}/{highlightMatch(result.key, searchTerm)}</BreadcrumbItem>
-                            {Object.entries(result.path).map((value, index2) => (
-                                <>
-                                    <BreadcrumbItem key={index2}>{highlightMatch(value[1], searchTerm)}</BreadcrumbItem>
-                                </>
-                            )
-
-                            )}
-                        </Breadcrumb>
-
-                        {/* <div><strong>Matched Term:</strong> "{result.term}"</div> */}
-                        <div><strong>Value:</strong> {highlightMatch(JSON.stringify(result.value), searchTerm)}
+                <div className="container mt-3">
+                    <h5>Grouped Search Results</h5>
+                    {grouped && Object.entries(grouped).map(([docId, matches]) => (
+                        <div key={docId} className="mb-4">
+                            <h6 className="bg-light p-2 border rounded">Document: {highlightMatch(docId, searchTerm)}</h6>
+                            {matches.map((match, idx) => (
+                                <div key={idx} className="card p-2 mb-2">
+                                    <div>
+                                        <strong>Path:</strong> {match.path.join(" › ")}
+                                    </div>
+                                    <div>
+                                        <strong>Key:</strong> {highlightMatch(match.key, searchTerm)}
+                                    </div>
+                                    <div>
+                                        <strong>Value:</strong>{" "}
+                                        {typeof match.value === "string"
+                                            ? highlightMatch(match.value, searchTerm)
+                                            : JSON.stringify(match.value)}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    </div>
-                ))}
-                {/* {Object.entries(results).map((field, value) => (
-                    <>
+                    ))}
+                </div>
 
 
-                    </>
-                ))} */}
-
-                {/* <pre>{JSON.stringify(results, null, 2)}</pre> */}
+                {/* <div>
+                    <h5>Results</h5>
+                    {results.map((result, index) => (
+                        <div key={index} className="card mb-2 p-2">
+                            <div className="card-header">
+                            </div>
+                            <div className="card-body"><strong>Value:</strong> {highlightMatch(JSON.stringify(result.value), searchTerm)}
+                            </div>
+                        </div>
+                    ))}
+                </div> */}
             </div>
-        </div>
+        </>
     );
 };
 
