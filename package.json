@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.16",
-    "@types/luxon": "^3.6.2"
+    "@types/luxon": "^3.6.2",
+    "crypto-browserify": "^3.12.1"
   }
 }

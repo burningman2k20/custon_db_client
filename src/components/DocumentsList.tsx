@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getDocuments, toast, DocumentType, createDocument, deleteDocument } from "../services/api";
+import { getDocuments, toast, DocumentType, createDocument, deleteDocument, generateUUID } from "../services/api";
 import { Button, FloatingLabel, Form, Modal } from "react-bootstrap";
+// import { randomUUID } from "crypto";
 
 type FieldType = "string" | "number" | "boolean" | "array" | "object";
 
@@ -53,6 +54,10 @@ export const DocumentsList = () => {
             console.error(err);
         }
     };
+
+    const handleAutoID = () => {
+        setNewDocumentName(generateUUID())
+    }
 
     return (
         <>
@@ -134,6 +139,21 @@ export const DocumentsList = () => {
                                     placeholder="Document Name"
                                 />
                             </FloatingLabel>
+                            <FloatingLabel controlId="floatingInput1"
+                                label="Create Auto DocID"
+                                className="mb-3">
+                                <Form.Check
+                                    type="switch"
+                                    onChange={(e) => {
+                                        if (e.currentTarget.checked)
+                                            setNewDocumentName(generateUUID())
+                                        else
+                                            setNewDocumentName("")
+                                    }}>
+
+                                </Form.Check>
+                            </FloatingLabel>
+
                         </Form.Group>
                     </Modal.Body>
 

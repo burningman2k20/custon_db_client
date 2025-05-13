@@ -50,8 +50,8 @@ export const DocumentView = () => {
     // Helper: Set value at path
     const setValueAtPath = (main: boolean = false, obj: any, path: string, value: any) => {
         const keys = path.split(".");
-        // const newData = { ...obj };
-        const newData = structuredClone(obj);
+        const newData = { ...obj };
+        // const newData = structuredClone(obj);
 
         let current: any = newData;
 
@@ -829,7 +829,7 @@ export const DocumentView = () => {
                                 <Modal.Title>Add New Object</Modal.Title>
                             </Modal.Header>
 
-                            <Modal.Body>
+                            <Modal.Body className="card">
                                 <Form.Group>
                                     <FloatingLabel
                                         controlId="floatingInput1"

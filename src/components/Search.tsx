@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Fuse, { FuseResult } from "fuse.js";
 import { getCollections, getDocuments, toast } from "../services/api";
 import { Breadcrumb, BreadcrumbItem, Button, Card, FloatingLabel, Form } from "react-bootstrap";
+import { api } from "../services/AuthService";
 
 
 const Search = () => {
@@ -207,6 +208,18 @@ const Search = () => {
         return allResults;
     }
 
+    const [searchResults, setSearchResults] = useState([]);
+
+    const handleServerSideSearch = async () => {
+        if (searchTerm.length < 4) return;
+        const res = await api.get("/search", {
+            params: { term: searchTerm }
+            // headers: { Authorization: `Bearer ${token}` }
+        });
+        setSearchResults(res.data);
+        // console.log(res.data)
+    };
+
     const handleSearch = async () => {
         if (searchTerm === '') return
         if (selectedCollection === undefined) setSelectedCollection(collections[0]);
@@ -227,6 +240,12 @@ const Search = () => {
 
         // })
 
+    };
+
+    const removeFirstSegment = (path: string, separator: string = ".") => {
+        const parts = path.split(separator);
+        parts.splice(0, 1);
+        return parts.join(separator);
     };
 
 
@@ -293,10 +312,33 @@ const Search = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search"
             /> */}
-                            <Button className="btn btn-primary mb-3" onClick={handleSearch}>Search</Button>
+                            <Button className="btn btn-primary mb-3" onClick={handleSearch}>Client Side Search</Button>
+                            {/* <Button className="btn btn-primary mb-3" onClick={handleServerSideSearch}>Server Side Search</Button> */}
                         </Form.Group>
                     </Card.Body>
                 </Card>
+                {/* 
+                <div className="container mt-3">
+                    {searchResults && Object.entries(searchResults).map(([res, idx]) => (
+                        <div key={res} className="mb-3">
+                            <strong> [Collection {res}]</strong>
+                            <ul>
+
+
+                                {Object.entries(idx).map((match: any, i: number) => (
+                                    <li key={i}>
+                                        {match.map((item: any, index: any) => (
+                                            <>
+                                                {removeFirstSegment(String(item.path), '.')} - {item.key} - {item.value}
+                                            </>
+                                        ))}
+                                      
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div> */}
 
                 <div className="container mt-3">
                     <h5>Grouped Search Results</h5>
