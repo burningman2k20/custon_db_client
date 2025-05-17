@@ -3,14 +3,15 @@ import { api } from './AuthService'
 import Swal from "sweetalert2";
 import { useState } from "react";
 
+export const BASE_URL = "https://custon-db-rest-api.onrender.com/"
 export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-projects-f38fd2f8.vercel.app/"
     // "https://db-service-145948873972.northamerica-northeast1.run.app/collections/"
     // "https://custon-db-rest-api-297546668637.us-central1.run.app/collections/"
 
-    "http://127.0.0.1/collections/";
-export const USER_URL = "http://127.0.0.1/user/"
-export const COLLECTION_URL = "http://127.0.0.1/collections/"
-export const AUTH_URL = "http://127.0.0.1/auth/"
+    `${BASE_URL}collections/`;
+export const USER_URL = `${BASE_URL}user/`
+export const COLLECTION_URL = `${BASE_URL}collections/`
+export const AUTH_URL = `${BASE_URL}auth/`
 // "http://10.0.0.202:80/collections/"; // Update this if needed
 
 

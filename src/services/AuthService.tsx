@@ -5,7 +5,8 @@ export const API_URL = //"https://custon-db-rest-api-dxmw-iz0nq4yb3-davids-proje
     //"https://db-service-145948873972.northamerica-northeast1.run.app/"
     //"https://custon-db-rest-api-297546668637.us-central1.run.app/"
     // 'http://10.0.0.202:3000/';
-    "http://127.0.0.1/";
+    // "http://127.0.0.1/";
+    "https://custon-db-rest-api.onrender.com/"
 
 // export const login = async (email: string, password: string) => {
 //     const res = await axios.post(`${API_URL}/login`, { email, password });
